@@ -1,36 +1,72 @@
 import fastapi as _fastapi
 import blockchain as _blockchain
 import json as _json
+from datetime import datetime
+from datetime import timedelta
 
 blockchain = _blockchain.Blockchain()
 app = _fastapi.FastAPI()
 
 # endpoint to submit visitation document
 @app.post("/add_visit/")
-def mine_block(data: str):
+def mine_block(visit_doc: str):
     if not blockchain.is_chain_valid():
         return _fastapi.HTTPException(status_code=400, detail="The blockchain is invalid")
-    block = blockchain.mine_block(data=data)
-
-    return {index: block["index"], data: block["data"], timestamp: block["timestamp"]}
+    
+    # visit_doc contains
+    ## student_id : string
+    ## issue_scale : number #(1,2,3,4,5)
+    ## rest_duration : number #(nos of days)
+    block = blockchain.mine_block(data=visit_doc)
+    return {
+        index: block["index"],
+        timestamp: block["timestamp"],
+        data: block["data"]
+    }
 
 # endpoint to verify request document
 @app.post("/verify_makeups/")
-def verify_visitation(verification_req_doc: str):
+def verify_visitation(verif_doc: str):
+    # verif doc contains
+    ## eval_date : datetime.Date
+    ## issue_threshold : number #(1,2,3,4,5)
+    ## makeup_reqs : [ {
+    #### student_id : string
+    #### block_index : number
+    ## } ]
+
+    doc = _json.load(verif_doc)
     makeup_approved = []
     makeup_rejected = []
-    for student in verification_req_doc['list_of_students']:
-        document = _json.load(blockchain.get_data_from_index(index))
-        if document == None:
-            makeup_rejected.append("Student with ID {} is not present in the visitation document".format(student[1]))
-        elif document['student_id'] != student[1]:
-            makeup_rejected.append("Student with ID {} is not matched with the entry in the visitation document".format(student[1]))
-        elif document['Scale_of_Health'] < verification_req_doc['threshold_lvl']:
-            makeup_rejected.append("Student with ID {} is not approved the makeup bcoz of scale_of_health".format(student[1]))
-        elif (verification_req_doc['date_of_Eval'] - document['Date_of_Visitation']).days > document['Duration_of_Rest_in_days']:
-            makeup_rejected.append("Student with ID {} is not approved the makeup bcoz of date".format(student[1]))
+    for req in doc['makeup_reqs']:
+        block = _json.load(blockchain.get_block_from_index(block_index))
+        if block == None:
+            makeup_rejected.append({
+                    "student_id": req["student_id"],
+                    "block_index":req["block_index"],
+                    "error":"Block not found"
+                })
+        elif block['student_id'] != req["student_id"]:
+            makeup_rejected.append({
+                    "student_id": req["student_id"],
+                    "block_index":req["block_index"],
+                    "error":"Student ID mismatch"
+                })
+        elif block[data]['issue_scale'] < verif_doc['issue_threshold']:
+            makeup_rejected.append({
+                    "student_id": req["student_id"],
+                    "block_index":req["block_index"],
+                    "error":"Low scale of Health Issue"
+                })
+        elif datetime.strptime(verif_doc['eval_date'],"%d-%m-%Y") - datetime.strptime(block['timestamp'],"%d-%m-%Y") > timedelta(days=block['data']['rest_duration']):
+            makeup_rejected.append({
+                    "student_id": req["student_id"],
+                    "block_index":req["block_index"],
+                    "error":"Evaluation not in Rest period"
+                })
         else:
-            makeup_approved.append(student[1])
+            makeup_approved.append({"student_id": req["student_id"]})
+    
     return {approved:makeup_approved, rejected:makeup_rejected}
 
 # endpoint to return the entire blockchain

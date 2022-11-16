@@ -1,4 +1,4 @@
-import datetime as _dt
+from datetime import date
 import hashlib as _hashlib
 import json as _json
 
@@ -30,18 +30,17 @@ class Blockchain:
     ) -> dict:
         block = {
             "index": index,
-            "timestamp": str(_dt.datetime.now()),
+            "timestamp": date.today().strftime("%d-%m-%Y"),
             "data": data,
             "nonce": nonce,
             "previous_hash": previous_hash,
         }
-
         return block
 
     def _get_previous_block(self) -> dict:
         return self.chain[-1]
     
-    def get_data_from_index(self,index: int) -> dict:
+    def get_block_from_index(self,index: int) -> dict:
         return self.chain[index]["data"]
 
     def _to_digest(
