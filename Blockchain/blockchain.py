@@ -23,7 +23,7 @@ class Blockchain:
             data=data, nonce=nonce, previous_hash=previous_hash, index=index
         )
         self.chain.append(block)
-        return index
+        return block
 
     def _create_block(
         self, data: str, nonce: int, previous_hash: str, index: int
