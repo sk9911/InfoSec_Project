@@ -19,46 +19,48 @@ def mine_block(visit_doc: str):
     ## rest_duration : number #(nos of days)
     block = blockchain.mine_block(data=visit_doc)
     return {
-        index: block["index"],
-        timestamp: block["timestamp"],
-        data: block["data"]
+        "index": block["index"],
+        "timestamp": block["timestamp"],
+        "data": block["data"]
     }
 
 # endpoint to verify request document
 @app.post("/verify_makeups/")
 def verify_visitation(verif_doc: str):
     # verif doc contains
-    ## eval_date : datetime.Date
+    ## eval_date : string #("dd-mm-YYYY")
     ## issue_threshold : number #(1,2,3,4,5)
     ## makeup_reqs : [ {
     #### student_id : string
     #### block_index : number
     ## } ]
 
-    doc = _json.load(verif_doc)
+    doc = _json.loads(verif_doc)
     makeup_approved = []
     makeup_rejected = []
     for req in doc['makeup_reqs']:
-        block = _json.load(blockchain.get_block_from_index(block_index))
+        block = blockchain.get_block_from_index(req['block_index'])
+        if block != None: data = _json.loads(block["data"])
+
         if block == None:
             makeup_rejected.append({
                     "student_id": req["student_id"],
                     "block_index":req["block_index"],
                     "error":"Block not found"
                 })
-        elif block['student_id'] != req["student_id"]:
+        elif data['student_id'] != req["student_id"]:
             makeup_rejected.append({
                     "student_id": req["student_id"],
                     "block_index":req["block_index"],
                     "error":"Student ID mismatch"
                 })
-        elif block[data]['issue_scale'] < verif_doc['issue_threshold']:
+        elif data['issue_scale'] < doc['issue_threshold']:
             makeup_rejected.append({
                     "student_id": req["student_id"],
                     "block_index":req["block_index"],
                     "error":"Low scale of Health Issue"
                 })
-        elif datetime.strptime(verif_doc['eval_date'],"%d-%m-%Y") - datetime.strptime(block['timestamp'],"%d-%m-%Y") > timedelta(days=block['data']['rest_duration']):
+        elif datetime.strptime(doc['eval_date'],"%d-%m-%Y") - datetime.strptime(block['timestamp'],"%d-%m-%Y") > timedelta(days=data['rest_duration']):
             makeup_rejected.append({
                     "student_id": req["student_id"],
                     "block_index":req["block_index"],
@@ -67,7 +69,7 @@ def verify_visitation(verif_doc: str):
         else:
             makeup_approved.append({"student_id": req["student_id"]})
     
-    return {approved:makeup_approved, rejected:makeup_rejected}
+    return { "approved":makeup_approved, "rejected":makeup_rejected }
 
 # endpoint to return the entire blockchain
 @app.get("/test/blockchain/")

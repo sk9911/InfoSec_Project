@@ -7,7 +7,7 @@ class Blockchain:
     def __init__(self):
         self.chain = list()
         initial_block = self._create_block(
-            data="genesis block", nonce=1, previous_hash="0", index=1
+            data="genesis block", nonce=1, previous_hash="0", index=0
         )
         self.chain.append(initial_block)
 
@@ -41,7 +41,10 @@ class Blockchain:
         return self.chain[-1]
     
     def get_block_from_index(self,index: int) -> dict:
-        return self.chain[index]["data"]
+        if index > len(self.chain)-1:
+            return None
+        else:
+            return self.chain[index]
 
     def _to_digest(
         self, new_nonce: int, previous_nonce: int, index: int, data: str
