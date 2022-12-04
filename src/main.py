@@ -1,12 +1,24 @@
 import fastapi as _fastapi
 import blockchain as _blockchain
+import Database as _database
+import UserDatabase as _userDatabase
+
 import json as _json
 from datetime import datetime
 from datetime import timedelta
 
 blockchain = _blockchain.Blockchain()
+makeupDB = _database.Database()
+userDB = _userDatabase.UserDatabase()
 app = _fastapi.FastAPI()
 
+################################################# User Endpoints #################################################
+
+
+################################################ Makeup Endpoints ################################################
+
+
+############################################## Blockchain Endpoints ##############################################
 # endpoint to submit visitation document
 @app.post("/add_visit/")
 def mine_block(visit_doc: str):
@@ -71,6 +83,7 @@ def verify_visitation(verif_doc: str):
     
     return { "approved":makeup_approved, "rejected":makeup_rejected }
 
+################################################# Test Endpoints #################################################
 # endpoint to return the entire blockchain
 @app.get("/test/blockchain/")
 def get_blockchain():
