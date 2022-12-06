@@ -22,6 +22,7 @@ class User(BaseModel):
     username: str
     password: str
     account: UserAccount
+    token: Optional[str] = None
 
 class MakeupData(BaseModel):
     title: str

@@ -1,15 +1,13 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from datetime import datetime, timedelta
+from typing import List
+import jwt
 
 from Models import User, UserAccount, UserLogin, UserView, Makeup, MakeupData, Request, RequestData, Prescription, PrescriptionData, BlockData
 from Blockchain import Blockchain
 from Database import MakeupDatabase, RequestDatabase, UserDatabase
 from Cryptography import Cryptography
-
-import jwt
-import json as _json
-from datetime import datetime, timedelta
-from typing import List
 
 blockchain = Blockchain()
 makeupDB = MakeupDatabase()
@@ -17,7 +15,7 @@ requestDB = RequestDatabase()
 userDB = UserDatabase()
 crypto = Cryptography()
 
-JWT_SECRET = "thisisthejwtsecretformedcserver"
+JWT_SECRET = "thisisthejwtsecretformakeupsystem"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='signin')
 
 app = FastAPI()
@@ -51,26 +49,63 @@ def get_current_stud(user:UserView = Depends(get_current_user)):
 def get_all_users():
     return userDB.get_all()
 
-@app.post('/signup', response_model=User)
-async def create_new_user(form_data: User):
+
+@app.post('/signup/doc', response_model=User)
+async def create_new_user(form_data: OAuth2PasswordRequestForm = Depends()):
     # print("SIGNUP REQ",form_data)
-    new_user = userDB.create(user=form_data)
+    new_user = userDB.create(User(
+        username = form_data.username,
+        password = form_data.password,
+        account = UserAccount.Doctor
+    ))
     if not new_user:
         raise HTTPException(status_code=401, detail='Username Already Exists')
-    # print("SIGNUP RES", new_user)
-    return new_user
+    token = userDB.giveToken(new_user.username, jwt.encode({username:new_user.username, timestamp:datetime.now()}, JWT_SECRET))
+    return {'access_token' : token, 'token_type' : 'bearer'}
+
+@app.post('/signup/prof', response_model=User)
+async def create_new_user(form_data: OAuth2PasswordRequestForm = Depends()):
+    # print("SIGNUP REQ",form_data)
+    new_user = userDB.create(User(
+        username = form_data.username,
+        password = form_data.password,
+        account = UserAccount.Professor
+    ))
+    if not new_user:
+        raise HTTPException(status_code=401, detail='Username Already Exists')
+    token = userDB.giveToken(user.username, jwt.encode({username:new_user.username, timestamp:datetime.now()}, JWT_SECRET))
+    return {'access_token' : token, 'token_type' : 'bearer'}
+
+@app.post('/signup/stud', response_model=User)
+async def create_new_user(form_data: OAuth2PasswordRequestForm = Depends()):
+    # print("SIGNUP REQ",form_data)
+    new_user = userDB.create(User(
+        username = form_data.username,
+        password = form_data.password,
+        account = UserAccount.Student
+    ))
+    if not new_user:
+        raise HTTPException(status_code=401, detail='Username Already Exists')
+    token = userDB.giveToken(user.username, jwt.encode({username:new_user.username, timestamp:datetime.now()}, JWT_SECRET))
+    return {'access_token' : token, 'token_type' : 'bearer'}
 
 @app.post('/signin')
 async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user = userDB.authenticate(username=form_data.username, password=form_data.password)
     if not user:
-        raise HTTPException(status_code=401, detail='Invalid Credentials')
-    token = jwt.encode(user.dict(), JWT_SECRET)
+        raise HTTPException(status_code=401, detail='Invalid Credentials') 
+    token = userDB.giveToken(user.username, jwt.encode({username:user.username, timestamp:datetime.now()}, JWT_SECRET))
     return {'access_token' : token, 'token_type' : 'bearer'}
 
-@app.get('/me', response_model=UserView)
-def get_user(user: UserView = Depends(get_current_user)):
+@app.get('/signout', response_model=UserView)
+def get_user(uv: UserView = Depends(get_current_user)):
+    user = userDB.read(uv.username)
     return user    
+
+@app.get('/me', response_model=User)
+def get_user(uv: UserView = Depends(get_current_user)):
+    user = userDB.read(uv.username)
+    return user
 
 ################################################ Makeup Endpoints ################################################
 @app.get('/makeup', response_model=List[Makeup])

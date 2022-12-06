@@ -47,6 +47,14 @@ class UserDatabase:
             return UserView(username=user.username, account=user.account)
         else:
             return False
+    
+    def giveToken(self,username:str, tkn:str):
+        self.db[username].token = tkn
+        return self.db[username].token
+    
+    def takeToken(self,username:str):
+        if self.db[username].token:
+            self.db[username].token = None
 
 #Create a class name database having functions create,read,update,delete
 
