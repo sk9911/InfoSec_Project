@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from Models import User, UserAccount, UserLogin, UserView, Makeup, MakeupData, Request, RequestData
+from Models import User, UserAccount, UserLogin, UserView, Makeup, MakeupData, Request, RequestData, Prescription, PrescriptionData, BlockData
 from Blockchain import Blockchain
 from Database import MakeupDatabase, RequestDatabase, UserDatabase
+from Cryptography import Cryptography
 
 import jwt
 import json as _json
@@ -14,6 +15,7 @@ blockchain = Blockchain()
 makeupDB = MakeupDatabase()
 requestDB = RequestDatabase()
 userDB = UserDatabase()
+crypto = Cryptography()
 
 JWT_SECRET = "thisisthejwtsecretformedcserver"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='signin')
@@ -33,7 +35,7 @@ def get_current_doc(user:User = Depends(get_current_user)):
     else:
         return user
 def get_current_prof(user:User = Depends(get_current_user)):
-    print("MIDDLEWARE", user.account, UserAccount.Professor)
+    # print("MIDDLEWARE", user.account, UserAccount.Professor)
     if user.account != UserAccount.Professor.value:
         raise HTTPException(status_code=401, detail='Invalid Account Type')
     else:
@@ -50,7 +52,7 @@ def get_all_users():
     return userDB.get_all()
 
 @app.post('/signup', response_model=User)
-def create_new_user(form_data: User):
+async def create_new_user(form_data: User):
     # print("SIGNUP REQ",form_data)
     new_user = userDB.create(user=form_data)
     if not new_user:
@@ -59,7 +61,7 @@ def create_new_user(form_data: User):
     return new_user
 
 @app.post('/signin')
-def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
+async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user = userDB.authenticate(username=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(status_code=401, detail='Invalid Credentials')
@@ -76,7 +78,7 @@ def get_all_makeups():
     return makeupDB.get_all()
 
 @app.post('/makeup', response_model=Makeup)
-def create_new_makeup(form_data: MakeupData, prof: UserView = Depends(get_current_prof)):
+async def create_new_makeup(form_data: MakeupData = Form(...), prof: UserView = Depends(get_current_prof)):
     new_makeup = Makeup(
         id = makeupDB.size(),
         professor = prof,
@@ -87,7 +89,7 @@ def create_new_makeup(form_data: MakeupData, prof: UserView = Depends(get_curren
     return res
 
 @app.put('/makeup/{makeup_id}/edit', response_model=Makeup)
-def edit_makeup(makeup_id:int, form_data: MakeupData, prof: UserView = Depends(get_current_prof)):
+async def edit_makeup(makeup_id:int, form_data: MakeupData = Form(...), prof: UserView = Depends(get_current_prof)):
     original_makeup = makeupDB.read(makeup_id)
     if not original_makeup:
         raise HTTPException(status_code=404, detail='Not Found')
@@ -103,7 +105,7 @@ def edit_makeup(makeup_id:int, form_data: MakeupData, prof: UserView = Depends(g
     return res
 
 @app.get('/makeup/{makeup_id}/close', response_model=Makeup)
-def close_makeup(makeup_id:int, prof: UserView = Depends(get_current_prof)):
+async def close_makeup(makeup_id:int, prof: UserView = Depends(get_current_prof)):
     original_makeup = makeupDB.read(makeup_id)
     if not original_makeup:
         raise HTTPException(status_code=404, detail='Not Found')
@@ -126,7 +128,7 @@ def get_all_requests():
     return requestDB.get_all()
 
 @app.post('/request', response_model=Request)
-def create_new_request(form_data: RequestData, stud: UserView = Depends(get_current_stud)):
+async def create_new_request(form_data: RequestData = Form(...), stud: UserView = Depends(get_current_stud)):
     original_makeup = makeupDB.read(form_data.makeup_id)
     if not original_makeup or not original_makeup.isOpen:
         raise HTTPException(status_code=404, detail='Not Found')
@@ -140,7 +142,7 @@ def create_new_request(form_data: RequestData, stud: UserView = Depends(get_curr
     return res
 
 @app.put('/request/{request_id}/edit', response_model=Request)
-def edit_request(request_id:int, block_index: int, stud: UserView = Depends(get_current_stud)):
+async def edit_request(request_id:int, block_index: int = Form(...), stud: UserView = Depends(get_current_stud)):
     original_request = requestDB.read(request_id)
     if not original_request:
         raise HTTPException(status_code=404, detail='Not Found')
@@ -168,71 +170,75 @@ def get_stud_requests(makeup_id:int, prof: UserView = Depends(get_current_prof))
         raise HTTPException(status_code=401, detail='Not Authorized')
     return requestDB.get_makeup(makeup_id)
 
-############################################## Blockchain Endpoints ##############################################
+############################################# Prescription Endpoints #############################################
 # endpoint to submit visitation document
-@app.post("/add_visit/")
-def mine_block(visit_doc: str):
+@app.post("/prescription", response_model=BlockData)
+async def mine_block(presc: PrescriptionData = Form(...), doc: UserView = Depends(get_current_doc)):
     if not blockchain.is_chain_valid():
-        return HTTPException(status_code=400, detail="The blockchain is invalid")
+        return HTTPException(status_code=400, detail="Blockchain is Invalid")
     
-    # visit_doc contains
-    ## student_id : string
-    ## issue_scale : number #(1,2,3,4,5)
-    ## rest_duration : number #(nos of days)
-    block = blockchain.mine_block(data=visit_doc)
-    return {
-        "index": block["index"],
-        "timestamp": block["timestamp"],
-        "data": block["data"]
-    }
+    prescription = Prescription(
+        student_username = presc.student_username,
+        rest_duration = presc.rest_duration,
+        scan_img = presc.scan_img,
+        signature = crypto.sign_message(str(presc))
+    )
+    block = blockchain.mine_block(data=prescription)
+    return BlockData(index=block.index, timestamp=block.timestamp)
 
-############################################## Verification Endpoints ##############################################
+####################################### Verification and Approval Endpoints ######################################
 # endpoint to verify request document
-@app.post("/verify_makeups/")
-def verify_visitation(verif_doc: str):
-    # verif doc contains
-    ## eval_date : string #("dd-mm-YYYY")
-    ## issue_threshold : number #(1,2,3,4,5)
-    ## makeup_reqs : [ {
-    #### student_id : string
-    #### block_index : number
-    ## } ]
+@app.post("/request/verify")
+async def verify_visitation(req_ids: List[int] = Form(...), prof: UserView = Depends(get_current_prof)):
+    for req_id in req_ids:
+        req: Request = requestDB.read(req_id)
+        if not req:
+            continue
 
-    doc = _json.loads(verif_doc)
-    makeup_approved = []
-    makeup_rejected = []
-    for req in doc['makeup_reqs']:
-        block = blockchain.get_block_from_index(req['block_index'])
-        if block != None: data = _json.loads(block["data"])
+        block = blockchain.get_block_from_index(req.block_index)
+        if not block:
+            req.verified = False
+            req.verification_comment = "Prescription Not Found"
+            requestDB.update(req_id, req)
+        
+        elif req.student.username != block.data.student_username:
+            req.verified = False
+            req.verification_comment = "Student Username Did Not Match"
+            requestDB.update(req_id, req)
 
-        if block == None:
-            makeup_rejected.append({
-                    "student_id": req["student_id"],
-                    "block_index":req["block_index"],
-                    "error":"Block not found"
-                })
-        elif data['student_id'] != req["student_id"]:
-            makeup_rejected.append({
-                    "student_id": req["student_id"],
-                    "block_index":req["block_index"],
-                    "error":"Student ID mismatch"
-                })
-        elif data['issue_scale'] < doc['issue_threshold']:
-            makeup_rejected.append({
-                    "student_id": req["student_id"],
-                    "block_index":req["block_index"],
-                    "error":"Low scale of Health Issue"
-                })
-        elif datetime.strptime(doc['eval_date'],"%d-%m-%Y") - datetime.strptime(block['timestamp'],"%d-%m-%Y") > timedelta(days=data['rest_duration']):
-            makeup_rejected.append({
-                    "student_id": req["student_id"],
-                    "block_index":req["block_index"],
-                    "error":"Evaluation not in Rest period"
-                })
+        # Signature Verification
+        elif not crypto.verify_signature(block.data.get_data_str(), block.data.signature):
+            req.verified = False
+            req.verification_comment = "Signature Verification Failed"
+            req.verification_output = block.data
+            requestDB.update(req_id, req)
+
+        elif req.makeup.eval_date - block.timestamp > timedelta(days=block.data.rest_duration):
+            req.verified = False
+            req.verification_comment = "Evaluation Date Not In Rest period"
+            req.verification_output = block.data
+            requestDB.update(req_id, req)
+
         else:
-            makeup_approved.append({"student_id": req["student_id"]})
+            req.verified = True
+            req.verification_comment = "Verified"
+            req.verification_output = block.data
+            requestDB.update(req_id, req)
     
-    return { "approved":makeup_approved, "rejected":makeup_rejected }
+    return True
+
+@app.put('/request/{request_id}/approve', response_model=Request)
+async def edit_request(request_id:int, value: bool = Form(...), comment: str = Form(...), prof: UserView = Depends(get_current_prof)):
+    req = requestDB.read(request_id)
+    if not req:
+        raise HTTPException(status_code=404, detail='Not Found')
+    if req.makeup.prof_username != prof.username:
+        raise HTTPException(status_code=401, detail='Not Authorized')
+    
+    req.approved = value
+    req.approval_comment = comment
+    req = requestDB.update(request_id,req)
+    return req
 
 ################################################# Test Endpoints #################################################
 # endpoint to return the entire blockchain

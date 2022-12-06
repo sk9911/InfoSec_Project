@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Union
+from typing import List, Optional
 from enum import Enum
 from datetime import date
 
@@ -43,5 +43,36 @@ class Request(BaseModel):
     student: UserView
     block_index: int
     makeup: Makeup
-    verification: Union[bool,None] = None
-    approval: Union[bool,None] = None
+    verified: Optional[bool] = None
+    verification_comment: str = ""
+    verification_output: Optional[Prescription] = None
+    approved: Optional[bool] = None
+    approval_comment: str = ""
+
+class PrescriptionData(Basemodel):
+    student_username: str
+    rest_duration: int
+    scan_img: bytearray
+    def __str__(self):
+        return self.student_username + str(self.rest_duration) + '.' + str(self.scan_img)
+
+class Prescription(Basemodel):
+    student_username: str
+    rest_duration: int
+    scan_img: bytearray
+    signature: str
+    def __str__(self):
+        return self.student_username + str(self.rest_duration) + '.' + str(self.scan_img) + '.' + self.signature
+    def get_data_str(self):
+        return self.student_username + str(self.rest_duration) + '.' + str(self.scan_img)
+
+class Block(BaseModel):
+    index: int
+    timestamp: date
+    data: Prescription
+    nonce: int
+    previous_hash: str
+
+class BlockData(BaseModel):
+    index: int
+    timestamp: date
