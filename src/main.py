@@ -1,19 +1,52 @@
-import fastapi as _fastapi
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+from Models import User, UserLogin, UserView, Makeup, MakupData, Request, RequestData
 import blockchain as _blockchain
 import Database as _database
 import UserDatabase as _userDatabase
 
+import jwt
 import json as _json
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 blockchain = _blockchain.Blockchain()
 makeupDB = _database.Database()
 userDB = _userDatabase.UserDatabase()
-app = _fastapi.FastAPI()
+
+JWT_SECRET = "thisisthejwtsecretformedcserver"
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='signin')
+
+app = FastAPI()
 
 ################################################# User Endpoints #################################################
+@app.post('/signup', response_model=User)
+def create_new_user(form_data: User):
+    print("SIGNUP REQ",form_data)
+    new_user = userDB.create(user=form_data)
+    if not new_user:
+        raise HTTPException(status_code=401, detail='Username Already Exists')
+    print("SIGNUP RES", new_user)
+    return new_user
 
+@app.post('/signin')
+async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = userDB.authenticate(username=form_data.username, password=form_data.password)
+    if not user:
+        raise HTTPException(status_code=401, detail='Invalid Credentials')
+    token = jwt.encode(user.dict(), JWT_SECRET)
+    return {'access_token' : token, 'token_type' : 'bearer'}
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+    user = userDB.read(username=payload.get('username'))
+    if not user:
+        raise HTTPException(status_code=401, detail='Not Authorized')
+    return user
+
+@app.get('/me', response_model=UserView)
+async def get_user(user: UserView = Depends(get_current_user)):
+    return user    
 
 ################################################ Makeup Endpoints ################################################
 
@@ -23,7 +56,7 @@ app = _fastapi.FastAPI()
 @app.post("/add_visit/")
 def mine_block(visit_doc: str):
     if not blockchain.is_chain_valid():
-        return _fastapi.HTTPException(status_code=400, detail="The blockchain is invalid")
+        return HTTPException(status_code=400, detail="The blockchain is invalid")
     
     # visit_doc contains
     ## student_id : string
@@ -88,7 +121,7 @@ def verify_visitation(verif_doc: str):
 @app.get("/test/blockchain/")
 def get_blockchain():
     if not blockchain.is_chain_valid():
-        return _fastapi.HTTPException(status_code=400, detail="The blockchain is invalid")
+        return HTTPException(status_code=400, detail="The blockchain is invalid")
     chain = blockchain.chain
     return chain
 
@@ -96,6 +129,6 @@ def get_blockchain():
 @app.get("/test/validate/")
 def is_blockchain_valid():
     if not blockchain.is_chain_valid():
-        return _fastapi.HTTPException(status_code=400, detail="The blockchain is invalid")
+        return HTTPException(status_code=400, detail="The blockchain is invalid")
 
     return blockchain.is_chain_valid()
