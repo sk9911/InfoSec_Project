@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<!--[if lt IE 8 ]><html class="no-js ie ie7" lang="en"> <![endif]-->
+<!--[if IE 8 ]><html class="no-js ie ie8" lang="en"> <![endif]-->
+<!--[if (gte IE 8)|!(IE)]><!--><html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+
+  <meta charset="utf-8">
+        <title>Makeup | Teachers</title>
+        <meta name="description" content="Resume">
+        <meta name="author" content="Hima Cherukuri">
+
+   <!-- Mobile Specific Metas
+   ================================================== -->
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+    <!-- CSS
+    ================================================== -->
+   <link rel="stylesheet" href="css/materialize.min.css">
+   <link rel="stylesheet" href="css/style.css">
+   <link rel="stylesheet" href="css/hr.css">
+
+
+    <!-- Favicons
+        ================================================== -->
+        <link rel="shortcut icon" href="favicon.png" >
+
+</head>
+
+<body>
+
+    <nav class="container">
+        <div class="nav-wrapper valign-wrapper">
+            <img class="logo" src="img/bits-logo.gif" />
+            <img class="navbar-right tagline" src="img/bits-tagline.png" />
+        </div>
+    </nav>
+
+    <div>
+        <img class="bits-line" src="img/bits-line.gif" />
+    </div>
+
+    <h3 class="center"><strong>Makeup Portal</strong></h3>
+
+    <div id ="header"> 
+        <h5><strong>Proffesor : Sahay Madarchod</strong></h5> 
+        
+        <form action="" method="post">
+            <div class="buttons"> 
+            <button type="submit" name="logout">Logout</button>            
+            </div>
+        </form>          
+    </div>
+    <br>
+    <br>
+
+    
+
+    <div class="prof_makeup_list" >
+        <p>
+            <h5>My Makeups</h5>           
+            <br>        
+        </p>
+
+        <div class="prof_makeup">
+            <li>
+                <details>
+                    <summary> <h5>Details</h5></summary>
+                    <p>Title</p>
+                    <p>Date</p>
+                    <p>Status</p>
+                </details>
+            </li>
+            
+            <form id="doc_page_form" action="contactus.php" method="post">          
+        
+            <p>Title
+                <input name="Makeup_Title" value="Course Name">
+                <input type="date" name="Makeup_Date" value="Date">
+                <input type="submit" value="Submit">
+            </p>
+            
+            <br>
+            
+            <p>                
+            <input type="submit" value="View requests">                       
+            <input type="submit" value="Close">
+            </p>            
+            </form>        
+            <br>
+        </div>        
+    </div>
+
+    <br>
+    <br>
+
+    
+    
+    <div class="prof_new_makeup" >
+        
+        <form id="prof_page_form" action="contactus.php" method="post">            
+    
+                <p>
+                <h5>New Makeup</h5>   
+                <br>
+                </p>
+        
+            <p>Title
+            <input name="Makeup_Title" value="Course Name"></p>
+        
+            <p>Date of the Makeup exam
+            <input type="date" name="date_makeup" value="DD-MM-YYYY"></p>            
+
+            <!-- <p>Time of the Makeup exam
+                <input type="time" name="date_makeup" value="00-00-AM"></p>            
+                       -->
+            <p>                
+                <input type="submit" value="Submit">
+            </p>
+            
+        </form>        
+    </div>
+    <br>
+    
+</body>
