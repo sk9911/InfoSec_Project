@@ -8,7 +8,7 @@ class UserDatabase:
         self.db = {}
 
     def get_all(self):
-        return list(self.db.keys())
+        return list(self.db.values())
 
     def create(self, user:User):
         if user.username in self.db:

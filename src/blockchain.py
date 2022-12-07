@@ -9,15 +9,15 @@ class Blockchain:
 
     def __init__(self):
         self.chain = list()
-        self._add_block(data="genesis block", nonce=0, previous_hash="0")
+        self._add_block(data=None, nonce=0, previous_hash="0")
 
     def _add_block(self, data: Prescription, nonce: int, previous_hash: str) -> Block:
         block = Block(
             index = len(self.chain),
-            timestamp = date.today().strftime("%Y-%m-%d"),
+            timestamp = date.today(),
             data = data,
             nonce = nonce,
-            previous_hash = previous_hash,
+            previous_hash = previous_hash
         )
         self.chain.append(block)
         return block

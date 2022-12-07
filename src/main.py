@@ -1,10 +1,10 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Form
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from typing import List
 import jwt
 
-from Models import User, UserAccount, UserLogin, UserView, Makeup, MakeupData, Request, RequestData, Prescription, PrescriptionData, BlockData
+from Models import User, UserAccount, UserLogin, UserView, Makeup, MakeupData, Request, RequestData, Prescription, BlockData
 from Blockchain import Blockchain
 from Database import MakeupDatabase, RequestDatabase, UserDatabase
 from Cryptography import Cryptography
@@ -45,7 +45,7 @@ def get_current_stud(user:UserView = Depends(get_current_user)):
         return user
 
 ################################################# User Endpoints #################################################
-@app.get('/users', response_model=List[str])
+@app.get('/users', response_model=List[User])
 def get_all_users():
     return userDB.get_all()
 
@@ -60,8 +60,7 @@ async def create_new_user(form_data: OAuth2PasswordRequestForm = Depends()):
     ))
     if not new_user:
         raise HTTPException(status_code=401, detail='Username Already Exists')
-    token = userDB.giveToken(new_user.username, jwt.encode({username:new_user.username, timestamp:datetime.now()}, JWT_SECRET))
-    return {'access_token' : token, 'token_type' : 'bearer'}
+    return new_user
 
 @app.post('/signup/prof', response_model=User)
 async def create_new_user(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -73,8 +72,7 @@ async def create_new_user(form_data: OAuth2PasswordRequestForm = Depends()):
     ))
     if not new_user:
         raise HTTPException(status_code=401, detail='Username Already Exists')
-    token = userDB.giveToken(user.username, jwt.encode({username:new_user.username, timestamp:datetime.now()}, JWT_SECRET))
-    return {'access_token' : token, 'token_type' : 'bearer'}
+    return new_user
 
 @app.post('/signup/stud', response_model=User)
 async def create_new_user(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -86,21 +84,20 @@ async def create_new_user(form_data: OAuth2PasswordRequestForm = Depends()):
     ))
     if not new_user:
         raise HTTPException(status_code=401, detail='Username Already Exists')
-    token = userDB.giveToken(user.username, jwt.encode({username:new_user.username, timestamp:datetime.now()}, JWT_SECRET))
-    return {'access_token' : token, 'token_type' : 'bearer'}
+    return new_user
 
 @app.post('/signin')
 async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
     user = userDB.authenticate(username=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(status_code=401, detail='Invalid Credentials') 
-    token = userDB.giveToken(user.username, jwt.encode({username:user.username, timestamp:datetime.now()}, JWT_SECRET))
+    token = userDB.giveToken(user.username, jwt.encode({"username":user.username, "timestamp":datetime.now().timestamp()}, JWT_SECRET))
     return {'access_token' : token, 'token_type' : 'bearer'}
 
-@app.get('/signout', response_model=UserView)
+@app.get('/signout')
 def get_user(uv: UserView = Depends(get_current_user)):
-    user = userDB.read(uv.username)
-    return user    
+    userDB.takeToken(uv.username)
+    return True    
 
 @app.get('/me', response_model=User)
 def get_user(uv: UserView = Depends(get_current_user)):
@@ -208,15 +205,15 @@ def get_stud_requests(makeup_id:int, prof: UserView = Depends(get_current_prof))
 ############################################# Prescription Endpoints #############################################
 # endpoint to submit visitation document
 @app.post("/prescription", response_model=BlockData)
-async def mine_block(presc: PrescriptionData = Form(...), doc: UserView = Depends(get_current_doc)):
+async def mine_block(student_username:str = Form(...), rest_duration:int = Form(...), scan_img:bytes = Form(...), doc: UserView = Depends(get_current_doc)):
     if not blockchain.is_chain_valid():
         return HTTPException(status_code=400, detail="Blockchain is Invalid")
-    
+    message = student_username + str(rest_duration) + '.' + str(scan_img)
     prescription = Prescription(
-        student_username = presc.student_username,
-        rest_duration = presc.rest_duration,
-        scan_img = presc.scan_img,
-        signature = crypto.sign_message(str(presc))
+        student_username = student_username,
+        rest_duration = rest_duration,
+        scan_img = scan_img,
+        signature = crypto.sign_message(message)
     )
     block = blockchain.mine_block(data=prescription)
     return BlockData(index=block.index, timestamp=block.timestamp)

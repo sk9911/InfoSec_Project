@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Union
 from enum import Enum
 from datetime import date
 
@@ -35,6 +35,16 @@ class Makeup(BaseModel):
     eval_date: date
     isOpen: bool = True
 
+class Prescription(BaseModel):
+    student_username: str
+    rest_duration: int
+    scan_img: bytes
+    signature: str
+    def __str__(self):
+        return self.student_username + str(self.rest_duration) + '.' + str(self.scan_img) + '.' + self.signature
+    def get_data_str(self):
+        return self.student_username + str(self.rest_duration) + '.' + str(self.scan_img)
+
 class RequestData(BaseModel):
     block_index: int
     makeup_id: int
@@ -50,27 +60,10 @@ class Request(BaseModel):
     approved: Optional[bool] = None
     approval_comment: str = ""
 
-class PrescriptionData(Basemodel):
-    student_username: str
-    rest_duration: int
-    scan_img: bytearray
-    def __str__(self):
-        return self.student_username + str(self.rest_duration) + '.' + str(self.scan_img)
-
-class Prescription(Basemodel):
-    student_username: str
-    rest_duration: int
-    scan_img: bytearray
-    signature: str
-    def __str__(self):
-        return self.student_username + str(self.rest_duration) + '.' + str(self.scan_img) + '.' + self.signature
-    def get_data_str(self):
-        return self.student_username + str(self.rest_duration) + '.' + str(self.scan_img)
-
 class Block(BaseModel):
     index: int
     timestamp: date
-    data: Prescription
+    data: Union[Prescription,None]
     nonce: int
     previous_hash: str
 
