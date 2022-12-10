@@ -1,4 +1,6 @@
-from fastapi import FastAPI, HTTPException, Depends, Form
+from fastapi import FastAPI, Request, HTTPException, Depends, Form
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from typing import List
@@ -17,6 +19,8 @@ crypto = Cryptography()
 
 JWT_SECRET = "thisisthejwtsecretformakeupsystem"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='signin')
+
+templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
 
@@ -43,6 +47,11 @@ def get_current_stud(user:UserView = Depends(get_current_user)):
         raise HTTPException(status_code=401, detail='Invalid Account Type')
     else:
         return user
+
+################################################# HTML Endpoints #################################################
+@app.get("/home", response_class=HTMLResponse)
+async def read(request: Request):
+    return templates.TemplateResponse("base.html", {"request": request})
 
 ################################################# User Endpoints #################################################
 @app.get('/users', response_model=List[User])

@@ -1,0 +1,43 @@
+<div class="prof_makeup_list" >
+    <h5>My Makeups</h5>
+    <div class="prof_makeup">
+        <li>
+            <details>
+                <summary>
+                    <h5>Details</h5>
+                    <span>Title</span>
+                    <span>Date</span>
+                    <span>Status</span>
+                </summary>
+
+                <form id="doc_page_form_view" action="contactus.php" method="post">
+                    <input type="submit" value="View requests">                       
+                    <input type="submit" value="Close">
+                </form>
+
+                <form id="doc_page_form_edit" action="contactus.php" method="post">          
+    
+                    <label>Title</label>
+                    <input name="Makeup_Title" value="Course Name">
+                    <label>Date of Evaluative</label>
+                    <input type="date" name="Makeup_Date" value="Date">
+                    
+                    <input type="submit" value="Submit">
+                </form>
+            </details>
+        </li>
+    </div>        
+</div>
+
+<div class="prof_new_makeup" >
+    <form id="prof_page_form" action="contactus.php" method="post">
+        <h5>New Makeup</h5>
+        <label>Title</label>
+        <input name="Makeup_Title" value="Course Name">
+    
+        <label>Date of the Makeup exam</label>
+        <input type="date" name="date_makeup" value="DD-MM-YYYY">           
+              
+        <input type="submit" value="Submit">
+    </form>        
+</div>
