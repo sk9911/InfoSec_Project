@@ -45,11 +45,11 @@ class Prescription(BaseModel):
     def get_data_str(self):
         return self.student_username + str(self.rest_duration) + '.' + str(self.scan_img)
 
-class RequestData(BaseModel):
+class MRequestData(BaseModel):
     block_index: int
     makeup_id: int
 
-class Request(BaseModel):
+class MRequest(BaseModel):
     id: int
     student: UserView
     block_index: int

@@ -1,5 +1,5 @@
 #Create a class name User having attributes id,username,password,role
-from Models import User, UserView, Makeup, MakeupData, Request, RequestData
+from Models import User, UserView, Makeup, MakeupData, MRequest, MRequestData
 from passlib.hash import bcrypt
 from typing import List
 
@@ -90,7 +90,7 @@ class RequestDatabase():
         return len(self.db)
     def get_all(self):
         return self.db
-    def create(self, obj:Request):
+    def create(self, obj:MRequest):
         self.db.append(obj)
         return self.db[-1]
     def read(self, id):

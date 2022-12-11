@@ -1,12 +1,15 @@
 from fastapi import FastAPI, Request
 from fastapi import HTTPException, Depends, Form
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
 from datetime import datetime, timedelta
 from typing import List
 import jwt
 
-from Models import User, UserAccount, UserLogin, UserView, Makeup, MakeupData, Request, RequestData, Prescription, BlockData
+from Models import User, UserAccount, UserLogin, UserView, Makeup, MakeupData, MRequest, MRequestData, Prescription, BlockData
 from Blockchain import Blockchain
 from Database import MakeupDatabase, RequestDatabase, UserDatabase
 from Cryptography import Cryptography
@@ -21,6 +24,9 @@ JWT_SECRET = "thisisthejwtsecretformakeupsystem"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='signin')
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 ################################################# Auth Middleware ################################################
 def get_current_user(token: str = Depends(oauth2_scheme)):
@@ -46,7 +52,10 @@ def get_current_stud(user:UserView = Depends(get_current_user)):
     else:
         return user
 
-
+################################################# HTML Endpoints #################################################
+@app.get("/home", response_class=HTMLResponse)
+async def read(request: Request):
+    return templates.TemplateResponse("base.html", {"request": request})
 
 ################################################# User Endpoints #################################################
 @app.get('/users', response_model=List[User])
@@ -159,16 +168,16 @@ def get_open_makeups(prof: UserView = Depends(get_current_stud)):
     return makeupDB.get_open()
 
 ################################################ Request Endpoints ###############################################
-@app.get('/request', response_model=List[Request])
+@app.get('/request', response_model=List[MRequest])
 def get_all_requests():
     return requestDB.get_all()
 
-@app.post('/request', response_model=Request)
-async def create_new_request(form_data: RequestData = Form(...), stud: UserView = Depends(get_current_stud)):
+@app.post('/request', response_model=MRequest)
+async def create_new_request(form_data: MRequestData = Form(...), stud: UserView = Depends(get_current_stud)):
     original_makeup = makeupDB.read(form_data.makeup_id)
     if not original_makeup or not original_makeup.isOpen:
         raise HTTPException(status_code=404, detail='Not Found')
-    new_request = Request(
+    new_request = MRequest(
         id = requestDB.size(),
         student = stud,
         block_index = form_data.block_index,
@@ -177,14 +186,14 @@ async def create_new_request(form_data: RequestData = Form(...), stud: UserView 
     res = requestDB.create(new_request)
     return res
 
-@app.put('/request/{request_id}/edit', response_model=Request)
+@app.put('/request/{request_id}/edit', response_model=MRequest)
 async def edit_request(request_id:int, block_index: int = Form(...), stud: UserView = Depends(get_current_stud)):
     original_request = requestDB.read(request_id)
     if not original_request:
         raise HTTPException(status_code=404, detail='Not Found')
     if original_request.student.username != stud.username:
         raise HTTPException(status_code=401, detail='Not Authorized')
-    updated_request = Request(
+    updated_request = MRequest(
         id = original_request.id,
         student = stud,
         block_index = block_index,
@@ -193,11 +202,11 @@ async def edit_request(request_id:int, block_index: int = Form(...), stud: UserV
     res = requestDB.update(request_id,updated_request)
     return res
 
-@app.get('/request/stud', response_model=List[Request])
+@app.get('/request/stud', response_model=List[MRequest])
 def get_stud_requests(stud: UserView = Depends(get_current_stud)):
     return requestDB.get_student(stud.username)
 
-@app.get('/request/prof/{makeup_id}', response_model=List[Request])
+@app.get('/request/prof/{makeup_id}', response_model=List[MRequest])
 def get_stud_requests(makeup_id:int, prof: UserView = Depends(get_current_prof)):
     original_makeup = makeupDB.read(makeup_id)
     if not original_makeup:
@@ -227,7 +236,7 @@ async def mine_block(student_username:str = Form(...), rest_duration:int = Form(
 @app.post("/request/verify")
 async def verify_visitation(req_ids: List[int] = Form(...), prof: UserView = Depends(get_current_prof)):
     for req_id in req_ids:
-        req: Request = requestDB.read(req_id)
+        req: MRequest = requestDB.read(req_id)
         if not req:
             continue
 
@@ -263,7 +272,7 @@ async def verify_visitation(req_ids: List[int] = Form(...), prof: UserView = Dep
     
     return True
 
-@app.put('/request/{request_id}/approve', response_model=Request)
+@app.put('/request/{request_id}/approve', response_model=MRequest)
 async def edit_request(request_id:int, value: bool = Form(...), comment: str = Form(...), prof: UserView = Depends(get_current_prof)):
     req = requestDB.read(request_id)
     if not req:
