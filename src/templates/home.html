@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <title>Makeup System</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', path='css/materialize.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <nav class="container">
+        <div class="nav-wrapper valign-wrapper">
+            <img class="logo" src="{{ url_for('static', path='img/bits-logo.gif') }}" />
+            <img class="navbar-right tagline" src="{{ url_for('static', path='img/bits-tagline.png') }}" />
+        </div>
+    </nav>
+
+    <div>
+        <img class="bits-line" src="{{ url_for('static', path='img/bits-line.gif') }}" />
+    </div>
+
+    <div id="sign_in_button" class="container">
+        <h3 class="center"><strong>Makeup System</strong></h3>
+        
+        <div class="row">
+            <table>
+                <tbody>
+                    <tr >
+                        <td class="center"><a class="waves-effect waves-light btn" href="/signup?account_type=doc" > Sign Up as Doctor</a></td>
+                    </tr>
+
+                    <tr >
+                        <td class="center"><a class="waves-effect waves-light btn" href="/signup?account_type=prof" > Sign Up as Professor</a></td>
+                    </tr>
+
+                    <tr >
+                        <td class="center"><a class="waves-effect waves-light btn" href="/signup?account_type=stud" > Sign Up as Student</a></td>
+                    </tr>
+
+                    <tr><td></td></tr>
+
+                    <tr >
+                        <td class="center"><a class="waves-effect waves-light btn" href="/signin" > Sign In</a></td>
+                    </tr>
+    
+                    
+                </tbody>
+            </table>    
+        </div>    
+    </div>        
+</body>
+</html>

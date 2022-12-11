@@ -44,7 +44,7 @@ class UserDatabase:
             return None
         # Matching Algorithm
         if bcrypt.verify(password, user.password):
-            return UserView(username=user.username, account=user.account)
+            return user
         else:
             return False
     

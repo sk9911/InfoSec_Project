@@ -27,7 +27,7 @@
         <h3 class="center"><strong>Makeup System</strong></h3>
 
         <div id ="header"> 
-            <h5 class="center"><strong>Proffesor : {{user.username}}</strong></h5> 
+            <h5 class="center"><strong>Student : {{user.username}}</strong></h5> 
             
             <form action="/signout" method="get">
                 <div class="buttons"> 
@@ -36,49 +36,46 @@
             </form>
         </div>
 
-        <div class="prof_makeup_list" >
-            <h5>My Makeups</h5>
-            <div class="prof_makeup">
+        <div class="student_req_list" >
+            <h5>My Requests</h5>
+            <list>
                 <li>
                     <details>
                         <summary>
-                            <span>Title</span>
+                            <span>Proff</span>
                             <span>Date</span>
                             <span>Status</span>
                         </summary>
-        
-                        <form id="doc_page_form_view" action="contactus.php" method="post">
-                            <input type="submit" value="View requests">                       
-                            <input type="submit" value="Close">
-                        </form>
-        
-                        <form id="doc_page_form_edit" action="contactus.php" method="post">          
-            
-                            <label>Title</label>
-                            <input name="Makeup_Title" value="Course Name">
-                            <label>Date of Evaluative</label>
-                            <input type="date" name="Makeup_Date" value="Date">
-                            
+                        <form id="prof_page_form" action="contactus.php" method="post">            
+                            <label>Block id:</label>
+                            <input name="block_id" value="prescription_id">       
                             <input type="submit" value="Submit">
                         </form>
                     </details>
                 </li>
-            </div>        
+            </list>        
         </div>
-        
+
         <br><hr><br>
         
-        <div class="prof_new_makeup" >
-            <form id="prof_page_form" action="contactus.php" method="post">
-                <h5>New Makeup</h5>
-                <label>Title</label>
-                <input name="Makeup_Title" value="Course Name">
-            
-                <label>Date of the Makeup exam</label>
-                <input type="date" name="date_makeup" value="DD-MM-YYYY">           
-                      
-                <input type="submit" value="Submit">
-            </form>        
+        <div class="student_makeup_list" >
+            <h5>Open Makeups</h5>   
+            <list>
+                <li>
+                    <details>
+                        <summary>
+                            <span>Proff</span>
+                            <span>Date</span>
+                            <span>Status</span>
+                        </summary>
+                        <form id="prof_page_form" action="contactus.php" method="post">            
+                            <label>Block id:</label>
+                            <input name="block_id" value="prescription_id">       
+                            <input type="submit" value="Submit">
+                        </form>                
+                    </details>
+                </li>
+            </list>
         </div>
 
     </div>        

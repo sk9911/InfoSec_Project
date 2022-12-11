@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi import HTTPException, Depends, Form
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
@@ -21,7 +21,7 @@ userDB = UserDatabase()
 crypto = Cryptography()
 
 JWT_SECRET = "thisisthejwtsecretformakeupsystem"
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='signin')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
 app = FastAPI()
 
@@ -53,9 +53,34 @@ def get_current_stud(user:UserView = Depends(get_current_user)):
         return user
 
 ################################################# HTML Endpoints #################################################
-@app.get("/home", response_class=HTMLResponse)
-async def read(request: Request):
-    return templates.TemplateResponse("base.html", {"request": request})
+@app.get("/", response_class=HTMLResponse)
+async def show_home(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
+
+@app.get("/signup", response_class=HTMLResponse)
+async def show_signup(request: Request, account_type:str):
+    accounts = {
+        "doc": "Doctor",
+        "prof": "Professor",
+        "stud": "Student"
+    }
+    return templates.TemplateResponse("signup.html", {"request": request, "account_type":account_type, "account_name":accounts[account_type]})
+
+@app.get("/signin", response_class=HTMLResponse)
+async def show_signin(request: Request):
+    return templates.TemplateResponse("signin.html", {"request": request})
+
+@app.get("/stud", response_class=HTMLResponse)
+async def show_stud(request: Request, uv:UserView = Depends(get_current_stud)):
+    return templates.TemplateResponse("stud.html", {"request": request, "user":uv})
+
+@app.get("/prof", response_class=HTMLResponse)
+async def show_prof(request: Request, uv:UserView = Depends(get_current_prof)):
+    return templates.TemplateResponse("prof.html", {"request": request, "user":uv})
+
+@app.get("/doc", response_class=HTMLResponse)
+async def show_doc(request: Request, uv:UserView = Depends(get_current_prof)):
+    return templates.TemplateResponse("doc.html", {"request": request, "user":uv})
 
 ################################################# User Endpoints #################################################
 @app.get('/users', response_model=List[User])
@@ -63,54 +88,50 @@ def get_all_users():
     return userDB.get_all()
 
 
-@app.post('/signup/doc', response_model=User)
-async def create_new_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    # print("SIGNUP REQ",form_data)
+@app.post('/signup', response_class=RedirectResponse, status_code=303)
+async def create_new_user(account_type: str, form_data: OAuth2PasswordRequestForm = Depends()):
+    accounts = {
+        "doc": UserAccount.Doctor,
+        "prof": UserAccount.Professor,
+        "stud": UserAccount.Student
+    }
     new_user = userDB.create(User(
         username = form_data.username,
         password = form_data.password,
-        account = UserAccount.Doctor
+        account = accounts[account_type]
     ))
     if not new_user:
         raise HTTPException(status_code=401, detail='Username Already Exists')
-    return new_user
+    return "/"
 
-@app.post('/signup/prof', response_model=User)
-async def create_new_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    # print("SIGNUP REQ",form_data)
-    new_user = userDB.create(User(
-        username = form_data.username,
-        password = form_data.password,
-        account = UserAccount.Professor
-    ))
-    if not new_user:
-        raise HTTPException(status_code=401, detail='Username Already Exists')
-    return new_user
-
-@app.post('/signup/stud', response_model=User)
-async def create_new_user(form_data: OAuth2PasswordRequestForm = Depends()):
-    # print("SIGNUP REQ",form_data)
-    new_user = userDB.create(User(
-        username = form_data.username,
-        password = form_data.password,
-        account = UserAccount.Student
-    ))
-    if not new_user:
-        raise HTTPException(status_code=401, detail='Username Already Exists')
-    return new_user
-
-@app.post('/signin')
-async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
+@app.post('/token')
+def generate_token(form_data: OAuth2PasswordRequestForm = Depends(oauth2_scheme)):
     user = userDB.authenticate(username=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(status_code=401, detail='Invalid Credentials') 
     token = userDB.giveToken(user.username, jwt.encode({"username":user.username, "timestamp":datetime.now().timestamp()}, JWT_SECRET))
     return {'access_token' : token, 'token_type' : 'bearer'}
 
-@app.get('/signout')
+@app.post('/signin', response_class=HTMLResponse)
+async def signin_user(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
+    user = userDB.authenticate(username=form_data.username, password=form_data.password)
+    if not user:
+        raise HTTPException(status_code=401, detail='Invalid Credentials') 
+    token = userDB.giveToken(user.username, jwt.encode({"username":user.username, "timestamp":datetime.now().timestamp()}, JWT_SECRET))
+    print("TOKEN", token)
+    htmlFiles = {
+        "Doctor" : "doc.html",
+        "Professor" : "prof.html",
+        "Student" : "stud.html"
+    }
+    response = templates.TemplateResponse(htmlFiles[user.account.value], {"request": request, "user":user})
+    response.set_cookie(key="access_token", value=f"Bearer {token}", httponly=True)
+    return response
+
+@app.get('/signout', response_class=RedirectResponse)
 def get_user(uv: UserView = Depends(get_current_user)):
     userDB.takeToken(uv.username)
-    return True    
+    return "/"    
 
 @app.get('/me', response_model=User)
 def get_user(uv: UserView = Depends(get_current_user)):
