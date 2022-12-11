@@ -3,6 +3,8 @@ import hashlib as _hashlib
 import json as _json
 from Models import Prescription, Block
 
+# from Cryptography import Cryptography
+
 
 class Blockchain:
     POW_HASH_PREFIX = "0000"
@@ -43,7 +45,14 @@ class Blockchain:
         return new_nonce
 
     def _hash(self, block: Block) -> str:
-        encoded_block = _json.dumps(block.to_dict(), sort_keys=True).encode()
+        block_dict = {
+            "index": block.index,
+            "timestamp": block.timestamp.strftime("%d-%m-%Y"),
+            "data": str(block.data),
+            "nonce": block.nonce,
+            "previous_hash": block.previous_hash
+        }
+        encoded_block = _json.dumps(block_dict, sort_keys=True).encode()
         return _hashlib.sha256(encoded_block).hexdigest()
 
     def mine_block(self, data: Prescription) -> Block:
@@ -72,9 +81,9 @@ class Blockchain:
             hashed_value = _hashlib.sha256(
                 self._to_digest(
                     new_nonce = block.nonce,
-                    previous_nonce = previous_block.nonceprevious_nonce,
+                    previous_nonce = previous_block.nonce,
                     index = block.index,
-                    data = block.data,
+                    content = str(block.data),
                 )
             ).hexdigest()
 
@@ -85,3 +94,23 @@ class Blockchain:
             block_index += 1
 
         return True
+
+# def main():
+#     crypto = Cryptography()
+#     message = "student_username" + str(1) + '.' + str(bytes("xyz",'utf-8'))
+#     p = Prescription(
+#         student_username = "student_username",
+#         rest_duration = 1,
+#         scan_img = bytes("xyz",'utf-8'),
+#         signature = crypto.sign_message(message)
+#     )
+#     bc = Blockchain()
+#     bc.mine_block(data=p)
+#     bc.mine_block(data=p)
+#     bc.mine_block(data=p)
+
+#     print(bc.is_chain_valid())
+
+
+# if __name__ == "__main__":
+#     main()

@@ -31,26 +31,49 @@
             
             <form action="/signout" method="get">
                 <div class="buttons"> 
-                <button type="submit" name="logout">Logout</button>            
+                <button type="submit" name="logout" class="btn-all">Logout</button>            
                 </div>
             </form>          
         </div>
 
-        <div class="doc_form" >
-            <form id="doc_page_form" action="contactus.php" method="post">
-                <label>Student Username:</label>
-                <input name="username" value="2019XXPSYYYY">
+        <div class="doc_form" style="margin:50px">
+            <form action="/prescription" method="post">
+                <label for="student_username">Student Username</label>
+                <input type="text" name="student_username" placeholder="2019XXPSYYYY">
+                <br>
                 <br>
             
-                <label>Rest duration suggested</label>
-                <input name="species" value="0-99">
+                <label for="rest_duration">Rest Duration</label>
+                <input type="number" name="rest_duration" value="1">
+                <br>
                 <br>
             
-                <label>Upload the scanned prescription</label>
-                <input type="file" id="myFile" name="filename">
+                <label for="scan_img">Upload the Scanned Prescription</label>
+                <input type="file" id="myFile" name="scan_img" >
+                <br>
                 <br>
         
-                <input type="submit" value="Submit">
+                <input type="submit" value="Submit" style="background-color: #13aa52;
+                border: 1px solid #13aa52;
+                border-radius: 4px;
+                box-shadow: rgba(0, 0, 0, .1) 0 2px 4px 0;
+                box-sizing: border-box;
+                color: #fff;
+                cursor: pointer;
+                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                font-size: 16px;
+                font-weight: 400;
+                outline: none;
+                outline: 0;
+                padding: 10px 25px;
+                text-align: center;
+                transform: translateY(0);
+                transition: transform 150ms, box-shadow 150ms;
+                user-select: none;
+                -webkit-user-select: none;
+                touch-action: manipulation;
+                margin-left: 0;">
+                <br>
                 <br>
             </form>        
         </div>

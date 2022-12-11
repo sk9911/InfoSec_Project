@@ -7,7 +7,6 @@
 
     <link rel="stylesheet" href="{{ url_for('static', path='css/materialize.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
-
 </head>
 
 <body>
@@ -23,7 +22,7 @@
         <img class="bits-line" src="{{ url_for('static', path='img/bits-line.gif') }}" />
     </div>
 
-    <div id="sign_in_button" class="container">
+    <div id="btn-all" class="container">
         <h3 class="center"><strong>Makeup System</strong></h3>
 
         <div id ="header"> 
@@ -31,47 +30,61 @@
             
             <form action="/signout" method="get">
                 <div class="buttons"> 
-                <button type="submit" name="logout">Logout</button>            
+                <button type="submit" name="logout" class="btn-all">Logout</button>            
                 </div>
             </form>
         </div>
 
         <div class="student_req_list" >
-            <h5>My Requests</h5>
-            <list>
+            <h5 class="center">My Requests</h5>
+            <ul style="list-style: none;margin:50px">
                 <li>
-                    <details>
-                        <summary>
-                            <span>Proff</span>
-                            <span>Date</span>
-                            <span>Status</span>
-                        </summary>
-                        <form id="prof_page_form" action="contactus.php" method="post">            
-                            <label>Block id:</label>
-                            <input name="block_id" value="prescription_id">       
-                            <input type="submit" value="Submit">
-                        </form>
-                    </details>
+                    <div  class="center" style="background-color: #ddd;margin-bottom:20px;border-radius: 5px;padding:5px">
+                        <h6 style="margin-right:50px;display:inline-block;">CS F101 Comprehensive Exam</h6>
+                        <h6 style="margin-right:50px;display:inline-block;">10-12-2022</h6>
+                        <h6 style="margin-right:50px;display:inline-block;">Approved</h6>
+                    </div>
                 </li>
-            </list>        
+            </ul>        
         </div>
 
         <br><hr><br>
         
         <div class="student_makeup_list" >
-            <h5>Open Makeups</h5>   
-            <list>
+            <h5 class="center">Open Makeups</h5>   
+            <ul style="list-style: none;margin:50px">
                 <li>
-                    <details>
+                    <details class="center" style="background-color: #ddd;margin-bottom:20px;border-radius: 5px;padding:5px">
                         <summary>
-                            <span>Proff</span>
-                            <span>Date</span>
-                            <span>Status</span>
+                            <div>
+                            <h6 style="margin-right:50px;display:inline-block;">CS F333 Mid-semester Exam</h6>
+                            <h6 style="margin-right:50px;display:inline-block;">20-09-2022</h6>
+                            <h6 style="margin-right:50px;display:inline-block;">Open</h6>
+                            </div>
                         </summary>
-                        <form id="prof_page_form" action="contactus.php" method="post">            
-                            <label>Block id:</label>
-                            <input name="block_id" value="prescription_id">       
-                            <input type="submit" value="Submit">
+                        <form id="prof_page_form" action="contactus.php" method="post" style="margin: 2vh;">            
+                            <label for="block_id">Block id:</label>
+                            <input type="number" name="block_id">
+                            <br><br>
+                            <input type="submit" value="Submit" style="background-color: #13aa52;
+                            border: 1px solid #13aa52;
+                            border-radius: 4px;
+                            box-shadow: rgba(0, 0, 0, .1) 0 2px 4px 0;
+                            box-sizing: border-box;
+                            color: #fff;
+                            cursor: pointer;
+                            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                            font-size: 16px;
+                            font-weight: 400;
+                            outline: none;
+                            outline: 0;
+                            padding: 5px 10px;
+                            text-align: center;
+                            transform: translateY(0);
+                            transition: transform 150ms, box-shadow 150ms;
+                            user-select: none;
+                            -webkit-user-select: none;
+                            touch-action: manipulation;">
                         </form>                
                     </details>
                 </li>

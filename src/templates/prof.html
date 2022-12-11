@@ -27,57 +27,157 @@
         <h3 class="center"><strong>Makeup System</strong></h3>
 
         <div id ="header"> 
-            <h5 class="center"><strong>Proffesor : {{user.username}}</strong></h5> 
+            <h5 class="center">Proffesor : {{user.username}}</h5> 
             
             <form action="/signout" method="get">
                 <div class="buttons"> 
-                <button type="submit" name="logout">Logout</button>            
+                <button type="submit" name="logout" class="btn-all">Logout</button>            
                 </div>
             </form>
+            <br>
         </div>
 
         <div class="prof_makeup_list" >
-            <h5>My Makeups</h5>
-            <div class="prof_makeup">
+            <h5 class="center"><strong>My Makeups</strong></h5>
+            <ul class="prof_makeup" style="list-style: none;margin:50px">
                 <li>
-                    <details>
+                    <details class="center" style="background-color: #ddd;margin-bottom:20px;border-radius: 5px;padding:5px">
                         <summary>
-                            <span>Title</span>
-                            <span>Date</span>
-                            <span>Status</span>
+                            <div class="justify-content-around">
+                            <h6 style="margin-right:75px;display:inline-block;">CS F101 Comprehensive Exam</h6>
+                            <h6 style="margin-right:75px;display:inline-block;">10-12-2022</h6>
+                            <h6 style="margin-right:75px;display:inline-block;">Open</h6>
+                            </div>
                         </summary>
         
-                        <form id="doc_page_form_view" action="contactus.php" method="post">
-                            <input type="submit" value="View requests">                       
-                            <input type="submit" value="Close">
-                        </form>
-        
-                        <form id="doc_page_form_edit" action="contactus.php" method="post">          
-            
-                            <label>Title</label>
-                            <input name="Makeup_Title" value="Course Name">
-                            <label>Date of Evaluative</label>
-                            <input type="date" name="Makeup_Date" value="Date">
-                            
-                            <input type="submit" value="Submit">
+                        <form id="doc_page_form_view" action="contactus.php" method="post" style="margin-top: 2vh;">
+                            <input type="submit" value="View requests" style="background-color: #767879;
+                            border: 1px solid #767879;
+                            border-radius: 4px;
+                            box-shadow: rgba(0, 0, 0, .1) 0 2px 4px 0;
+                            box-sizing: border-box;
+                            color: #fff;
+                            cursor: pointer;
+                            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                            font-size: 16px;
+                            font-weight: 400;
+                            outline: none;
+                            outline: 0;
+                            padding: 5px 10px;
+                            text-align: center;
+                            transform: translateY(0);
+                            transition: transform 150ms, box-shadow 150ms;
+                            user-select: none;
+                            -webkit-user-select: none;
+                            touch-action: manipulation;">                       
+                            <input type="submit" value="Close" style="background-color: #767879;
+                            border: 1px solid #767879;
+                            border-radius: 4px;
+                            box-shadow: rgba(0, 0, 0, .1) 0 2px 4px 0;
+                            box-sizing: border-box;
+                            color: #fff;
+                            cursor: pointer;
+                            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                            font-size: 16px;
+                            font-weight: 400;
+                            outline: none;
+                            outline: 0;
+                            padding: 5px 10px;
+                            text-align: center;
+                            transform: translateY(0);
+                            transition: transform 150ms, box-shadow 150ms;
+                            user-select: none;
+                            -webkit-user-select: none;
+                            touch-action: manipulation;">
                         </form>
                     </details>
                 </li>
-            </div>        
+
+                <li>
+                    <details class="center" style="background-color: #ddd;margin-bottom:20px;">
+                        <summary>
+                            <div class="justify-content-around">
+                            <h6 style="margin-right:75px;display:inline-block;">CS F333 Mid-semester Exam</h6>
+                            <h6 style="margin-right:75px;display:inline-block;">20-09-2022</h6>
+                            <h6 style="margin-right:75px;display:inline-block;">Closed</h6>
+                            </div>
+                        </summary>
+        
+                        <form id="doc_page_form_view" action="contactus.php" method="post" style="margin-top: 2vh;">
+                            <input type="submit" value="View requests" style="background-color: #767879;
+                            border: 1px solid #767879;
+                            border-radius: 4px;
+                            box-shadow: rgba(0, 0, 0, .1) 0 2px 4px 0;
+                            box-sizing: border-box;
+                            color: #fff;
+                            cursor: pointer;
+                            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                            font-size: 16px;
+                            font-weight: 400;
+                            outline: none;
+                            outline: 0;
+                            padding: 5px 10px;
+                            text-align: center;
+                            transform: translateY(0);
+                            transition: transform 150ms, box-shadow 150ms;
+                            user-select: none;
+                            -webkit-user-select: none;
+                            touch-action: manipulation;">                       
+                            <input type="submit" value="Close" style="background-color: #767879;
+                            border: 1px solid #767879;
+                            border-radius: 4px;
+                            box-shadow: rgba(0, 0, 0, .1) 0 2px 4px 0;
+                            box-sizing: border-box;
+                            color: #fff;
+                            cursor: pointer;
+                            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                            font-size: 16px;
+                            font-weight: 400;
+                            outline: none;
+                            outline: 0;
+                            padding: 5px 10px;
+                            text-align: center;
+                            transform: translateY(0);
+                            transition: transform 150ms, box-shadow 150ms;
+                            user-select: none;
+                            -webkit-user-select: none;
+                            touch-action: manipulation;">
+                        </form>
+                    </details>
+                </li>
+            </ul>        
         </div>
         
         <br><hr><br>
         
         <div class="prof_new_makeup" >
             <form id="prof_page_form" action="contactus.php" method="post">
-                <h5>New Makeup</h5>
+                <h5 class="center"><strong>New Makeup</strong></h5>
                 <label>Title</label>
-                <input name="Makeup_Title" value="Course Name">
+                <input type="text" name="Makeup_Title" value="Course Name">
             
                 <label>Date of the Makeup exam</label>
                 <input type="date" name="date_makeup" value="DD-MM-YYYY">           
                       
-                <input type="submit" value="Submit">
+                <input type="submit" value="Submit" style="background-color: #13aa52;
+                border: 1px solid #13aa52;
+                border-radius: 4px;
+                box-shadow: rgba(0, 0, 0, .1) 0 2px 4px 0;
+                box-sizing: border-box;
+                color: #fff;
+                cursor: pointer;
+                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                font-size: 16px;
+                font-weight: 400;
+                outline: none;
+                outline: 0;
+                padding: 5px 10px;
+                text-align: center;
+                transform: translateY(0);
+                transition: transform 150ms, box-shadow 150ms;
+                user-select: none;
+                -webkit-user-select: none;
+                touch-action: manipulation;">
             </form>        
         </div>
 

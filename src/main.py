@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Response
-from fastapi import HTTPException, Depends, Form
+from fastapi import HTTPException, Depends, Form, File, Cookie
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -21,7 +21,7 @@ userDB = UserDatabase()
 crypto = Cryptography()
 
 JWT_SECRET = "thisisthejwtsecretformakeupsystem"
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='signin')
 
 app = FastAPI()
 
@@ -29,11 +29,15 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 ################################################# Auth Middleware ################################################
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(access_token: str = Cookie(default=None)):
+    print("TOKEN",access_token)
+    token = access_token.split(" ")[-1]
     payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+    print("PAYLOAD",payload)
     user = userDB.read(username=payload.get('username'))
+    print("USER", user)
     if not user:
-        raise HTTPException(status_code=401, detail='Not Authorized')
+        raise HTTPException(status_code=401, detail='MKC')
     return user
 def get_current_doc(user:User = Depends(get_current_user)):
     if user.account != UserAccount.Doctor.value:
@@ -88,7 +92,7 @@ def get_all_users():
     return userDB.get_all()
 
 
-@app.post('/signup', response_class=RedirectResponse, status_code=303)
+@app.post('/signup', response_class=RedirectResponse)
 async def create_new_user(account_type: str, form_data: OAuth2PasswordRequestForm = Depends()):
     accounts = {
         "doc": UserAccount.Doctor,
@@ -102,7 +106,7 @@ async def create_new_user(account_type: str, form_data: OAuth2PasswordRequestFor
     ))
     if not new_user:
         raise HTTPException(status_code=401, detail='Username Already Exists')
-    return "/"
+    return "/signin"
 
 @app.post('/token')
 def generate_token(form_data: OAuth2PasswordRequestForm = Depends(oauth2_scheme)):
@@ -118,7 +122,6 @@ async def signin_user(request: Request, form_data: OAuth2PasswordRequestForm = D
     if not user:
         raise HTTPException(status_code=401, detail='Invalid Credentials') 
     token = userDB.giveToken(user.username, jwt.encode({"username":user.username, "timestamp":datetime.now().timestamp()}, JWT_SECRET))
-    print("TOKEN", token)
     htmlFiles = {
         "Doctor" : "doc.html",
         "Professor" : "prof.html",
@@ -239,9 +242,10 @@ def get_stud_requests(makeup_id:int, prof: UserView = Depends(get_current_prof))
 ############################################# Prescription Endpoints #############################################
 # endpoint to submit visitation document
 @app.post("/prescription", response_model=BlockData)
-async def mine_block(student_username:str = Form(...), rest_duration:int = Form(...), scan_img:bytes = Form(...), doc: UserView = Depends(get_current_doc)):
+async def mine_block(student_username:str = Form(...), rest_duration:int = Form(...), doc: UserView = Depends(get_current_doc)):
     if not blockchain.is_chain_valid():
         return HTTPException(status_code=400, detail="Blockchain is Invalid")
+    scan_img = bytes("xyz",'utf-8')
     message = student_username + str(rest_duration) + '.' + str(scan_img)
     prescription = Prescription(
         student_username = student_username,
