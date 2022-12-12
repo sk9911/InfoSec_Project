@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Response
 from fastapi import HTTPException, Depends, Form, Cookie, File, UploadFile
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
@@ -77,7 +77,7 @@ async def show_signin(request: Request):
 
 @app.get("/stud", response_class=HTMLResponse)
 async def show_stud(request: Request, uv:UserView = Depends(get_current_stud)):
-    return templates.TemplateResponse("stud.html", {"request": request, "user":uv})
+    return templates.TemplateResponse("stud.html", {"request": request, "user":uv, "student_requests":get_stud_requests(uv), "open_makeups":get_open_makeups(uv) })
 
 @app.get("/prof", response_class=HTMLResponse)
 async def show_prof(request: Request, uv:UserView = Depends(get_current_prof)):
@@ -129,7 +129,8 @@ async def signin_user(request: Request, form_data: OAuth2PasswordRequestForm = D
     elif user.account.value == "Professor":
         response = templates.TemplateResponse("prof.html", {"request": request, "user":user, "prof_makeups":get_prof_makeups(user)})
     elif user.account.value == "Student":
-        response = templates.TemplateResponse("stud.html", {"request": request, "user":user})
+        response = templates.TemplateResponse("stud.html", {"request": request, "user":user, "student_requests":get_stud_requests(user), "open_makeups":get_open_makeups(user) })
+
     response.set_cookie(key="access_token", value=f"Bearer {token}", httponly=True)
     return response
 
@@ -137,11 +138,6 @@ async def signin_user(request: Request, form_data: OAuth2PasswordRequestForm = D
 def get_user(uv: UserView = Depends(get_current_user)):
     userDB.takeToken(uv.username)
     return "/"    
-
-@app.get('/me', response_model=User)
-def get_user(uv: UserView = Depends(get_current_user)):
-    user = userDB.read(uv.username)
-    return user
 
 ################################################ Makeup Endpoints ################################################
 @app.get('/makeup', response_model=List[Makeup])
@@ -176,7 +172,7 @@ def get_prof_makeups(prof: UserView = Depends(get_current_prof)):
     return makeupDB.get_prof(prof.username)
 
 @app.get('/makeup/open', response_model=List[Makeup])
-def get_open_makeups(prof: UserView = Depends(get_current_stud)):
+def get_open_makeups(stud: UserView = Depends(get_current_stud)):
     return makeupDB.get_open()
 
 ################################################ Request Endpoints ###############################################
@@ -184,35 +180,20 @@ def get_open_makeups(prof: UserView = Depends(get_current_stud)):
 def get_all_requests():
     return requestDB.get_all()
 
-@app.post('/request', response_model=MRequest)
-async def create_new_request(form_data: MRequestData = Form(...), stud: UserView = Depends(get_current_stud)):
-    original_makeup = makeupDB.read(form_data.makeup_id)
+@app.post('/request/{makeup_id}', response_class=HTMLResponse)
+async def create_new_request(request:Request, makeup_id:int, block_index:int = Form(...), stud: UserView = Depends(get_current_stud)):
+    original_makeup = makeupDB.read(makeup_id)
     if not original_makeup or not original_makeup.isOpen:
         raise HTTPException(status_code=404, detail='Not Found')
     new_request = MRequest(
         id = requestDB.size(),
         student = stud,
-        block_index = form_data.block_index,
-        makeup = makeupDB.read(form_data.makeup_id),
+        block_index = block_index,
+        makeup = makeupDB.read(makeup_id),
     )
     res = requestDB.create(new_request)
-    return res
-
-@app.put('/request/{request_id}/edit', response_model=MRequest)
-async def edit_request(request_id:int, block_index: int = Form(...), stud: UserView = Depends(get_current_stud)):
-    original_request = requestDB.read(request_id)
-    if not original_request:
-        raise HTTPException(status_code=404, detail='Not Found')
-    if original_request.student.username != stud.username:
-        raise HTTPException(status_code=401, detail='Not Authorized')
-    updated_request = MRequest(
-        id = original_request.id,
-        student = stud,
-        block_index = block_index,
-        makeup = original_request.makeup,
-    )
-    res = requestDB.update(request_id,updated_request)
-    return res
+    response = templates.TemplateResponse("stud.html", {"request": request, "user":stud, "student_requests":get_stud_requests(stud), "open_makeups":get_open_makeups(stud) })
+    return response
 
 @app.get('/request/stud', response_model=List[MRequest])
 def get_stud_requests(stud: UserView = Depends(get_current_stud)):
@@ -271,8 +252,8 @@ def mine_block(
 
 ####################################### Verification and Approval Endpoints ######################################
 # endpoint to verify request document
-@app.post("/makeup/{makeup_id}/verify")
-async def verify_visitation_bulk(makeup_id:int, prof: UserView = Depends(get_current_prof)):
+@app.get("/makeup/{makeup_id}/verify", response_class=RedirectResponse, status_code=303)
+async def verify_request_bulk(makeup_id:int, prof: UserView = Depends(get_current_prof)):
     original_makeup = makeupDB.read(makeup_id)
     if not original_makeup:
         raise HTTPException(status_code=404, detail='Not Found')
@@ -284,36 +265,36 @@ async def verify_visitation_bulk(makeup_id:int, prof: UserView = Depends(get_cur
         if not block:
             req.verified = False
             req.verification_comment = "Prescription Not Found"
-            requestDB.update(req_id, req)
+            requestDB.update(req.id, req)
         
         elif req.student.username != block.data.student_username:
             req.verified = False
             req.verification_comment = "Student Username Did Not Match"
-            requestDB.update(req_id, req)
+            requestDB.update(req.id, req)
 
         # Signature Verification
         elif not crypto.verify_signature(block.data.get_data_str(), block.data.signature):
             req.verified = False
             req.verification_comment = "Signature Verification Failed"
             req.verification_output = block.data
-            requestDB.update(req_id, req)
+            requestDB.update(req.id, req)
 
         elif req.makeup.eval_date - block.timestamp > timedelta(days=block.data.rest_duration):
             req.verified = False
             req.verification_comment = "Evaluation Date Not In Rest period"
             req.verification_output = block.data
-            requestDB.update(req_id, req)
+            requestDB.update(req.id, req)
 
         else:
             req.verified = True
-            req.verification_comment = "Verified"
+            req.verification_comment = "Student ID matched; Signature Verified; Date checked; Successful"
             req.verification_output = block.data
-            requestDB.update(req_id, req)
+            requestDB.update(req.id, req)
     
-    return True
+    return '/request/prof/{}'.format(original_makeup.id)
 
-@app.post("/request/{req_id}/verify")
-async def verify_visitation(req_id: int, prof: UserView = Depends(get_current_prof)):
+@app.get("/request/{req_id}/verify", response_class=RedirectResponse, status_code=303)
+async def verify_request(req_id: int, prof: UserView = Depends(get_current_prof)):
     req: MRequest = requestDB.read(req_id)
     if not req:
         return HTTPException(status_code=404, detail="Not Found")
@@ -344,25 +325,36 @@ async def verify_visitation(req_id: int, prof: UserView = Depends(get_current_pr
 
     else:
         req.verified = True
-        req.verification_comment = "Verified"
+        req.verification_comment = "Student ID matched; Signature Verified; Date checked; Successful"
         req.verification_output = block.data
         requestDB.update(req_id, req)
     
-    return True
+    return '/request/prof/{}'.format(req.makeup.id)
 
 
-@app.put('/request/{request_id}/approve', response_model=MRequest)
-async def edit_request(request_id:int, approval_value: bool = Form(...), comment: str = Form(...), prof: UserView = Depends(get_current_prof)):
+@app.post('/request/{request_id}/approve', response_class=RedirectResponse, status_code=303)
+async def approve_request(request_id:int, approval_value: bool = Form(False), approval_comment: str = Form(...), prof: UserView = Depends(get_current_prof)):
     req = requestDB.read(request_id)
     if not req:
         raise HTTPException(status_code=404, detail='Not Found')
-    if req.makeup.prof_username != prof.username:
+    if req.makeup.professor.username != prof.username:
         raise HTTPException(status_code=401, detail='Not Authorized')
     
     req.approved = approval_value
-    req.approval_comment = comment
+    req.approval_comment = approval_comment
     req = requestDB.update(request_id,req)
-    return req
+    return '/request/prof/{}'.format(req.makeup.id)
+
+
+@app.get("/image/{request_id}", response_class=FileResponse)
+async def show_image(request_id:int, prof: UserView = Depends(get_current_prof)):
+    req = requestDB.read(request_id)
+    if not req:
+        raise HTTPException(status_code=404, detail='Not Found')
+    if not req.verification_output:
+        raise HTTPException(status_code=401, detail='Not Authorized')
+    
+    return req.verification_output.scan_img
 
 ################################################# Test Endpoints #################################################
 # endpoint to return the entire blockchain

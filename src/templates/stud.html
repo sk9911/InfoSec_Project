@@ -37,15 +37,29 @@
 
         <div class="student_req_list" >
             <h5 class="center">My Requests</h5>
-            <ul style="list-style: none;margin:50px">
-                <li>
-                    <div  class="center" style="background-color: #ddd;margin-bottom:20px;border-radius: 5px;padding:5px">
-                        <h6 style="margin-right:50px;display:inline-block;">CS F101 Comprehensive Exam</h6>
-                        <h6 style="margin-right:50px;display:inline-block;">10-12-2022</h6>
-                        <h6 style="margin-right:50px;display:inline-block;">Approved</h6>
-                    </div>
+            
+            <ul class="stud_reqs" style="list-style: none;margin:50px">
+                {% for request in student_requests %}
+                <li class="center" style="background-color: #ddd;margin-bottom:20px;border-radius:5px;">
+                    <h6 style="margin-inline:25px;display:inline-block;"><b>{{request.makeup.title}}</b></h6>
+                    <h6 style="margin-inline:25px;display:inline-block;"><b>{{request.makeup.eval_date}}</b></h6>
+                    <h6 style="margin-inline:25px;display:inline-block;"><b>Block Index Submitted : {{request.block_index}}</b></h6>
+                    <br>
+
+                    <h6 style="margin-inline:25px;display:inline-block;"><b>
+                        {% if request.verified %} Verified {% endif %} 
+                    </b></h6>
+                    <h6 style="margin-inline:25px;display:inline-block;"><b>{{request.verification_comment}}</b></h6>
+                    <br>
+
+                    <h6 style="margin-inline:25px;display:inline-block;"><b>
+                        {% if request.approved %} Approved {% endif %} 
+                    </b></h6>
+                    <h6 style="margin-inline:25px;display:inline-block;"><b>{{request.approval_comment}}</b></h6>
+                    <br>
                 </li>
-            </ul>        
+                {% endfor %}
+
         </div>
 
         <br><hr><br>
@@ -53,19 +67,28 @@
         <div class="student_makeup_list" >
             <h5 class="center">Open Makeups</h5>   
             <ul style="list-style: none;margin:50px">
+                {% for makeup in open_makeups %}
                 <li>
                     <details class="center" style="background-color: #ddd;margin-bottom:20px;border-radius: 5px;padding:5px">
                         <summary>
                             <div>
-                            <h6 style="margin-right:50px;display:inline-block;">CS F333 Mid-semester Exam</h6>
-                            <h6 style="margin-right:50px;display:inline-block;">20-09-2022</h6>
-                            <h6 style="margin-right:50px;display:inline-block;">Open</h6>
+                            <h6 style="margin-right:25px;display:inline-block;">{{makeup.title}}</h6>
+                            <h6 style="margin-right:25px;display:inline-block;">{{makeup.eval_date}}</h6>
+                            <h6 style="margin-inline:25px;display:inline-block;">
+                                {% if makeup.isOpen %}
+                                    <b>Open</b>
+                                {% else %}
+                                    <b>Closed</b>
+                                {% endif %}
+                            </h6>
                             </div>
                         </summary>
-                        <form id="prof_page_form" action="contactus.php" method="post" style="margin: 2vh;">            
-                            <label for="block_id">Block id:</label>
-                            <input type="number" name="block_id">
-                            <br><br>
+
+                        <form action="/request/{{makeup.id}}" method="post">            
+                            <label for="block_index">Block Index:</label>
+                            <input type="number" name="block_index">
+                            <br>
+
                             <input type="submit" value="Submit" style="background-color: #13aa52;
                             border: 1px solid #13aa52;
                             border-radius: 4px;
@@ -88,6 +111,7 @@
                         </form>                
                     </details>
                 </li>
+                {% endfor %}
             </list>
         </div>
 

@@ -40,7 +40,7 @@
         <div>
             <h5 class="center"> Requests for <b>{{makeup.title}}</b></h5>
 
-            <form action="/makeup/{{makeup.id}}/approve" method="put" style="padding:20px;display:inline-block;">
+            <form action="/makeup/{{makeup.id}}/verify" method="get" style="padding:20px;display:inline-block;">
                 <input type="submit" value="Verify All Requests">                       
             </form>
 
@@ -57,30 +57,37 @@
                             <h6 style="margin-inline:25px;display:inline-block;"><b>
                                 {% if request.verified %} Verified {% endif %} 
                             </b></h6>
-                            <h6 style="margin-inline:25px;display:inline-block;"><b>Verification Comment: {{request.verification_comment}}</b></h6>
+                            <h6 style="margin-inline:25px;display:inline-block;"><b>{{request.verification_comment}}</b></h6>
                             <br>
 
                             <h6 style="margin-inline:25px;display:inline-block;"><b>
                                 {% if request.approved %} Approved {% endif %} 
                             </b></h6>
-                            <h6 style="margin-inline:25px;display:inline-block;"><b>Approval Comment: {{request.approval_comment}}</b></h6>
+                            <h6 style="margin-inline:25px;display:inline-block;"><b>{{request.approval_comment}}</b></h6>
                             <br>
                             
                             </div>
                         </summary>
         
-                        <form action="/request/{{request.id}}/approve" method="put" style="padding:20px;display:inline-block;">
+                        <hr>
+                        <form action="/request/{{request.id}}/verify" method="get" style="padding:20px;display:inline-block;">
                             <input type="submit" value="Verify Request">                       
                         </form>
 
                         {% if request.verification_output %}
-                        <form action="/request/{{request.id}}/approve" method="put" style="padding:20px;display:inline-block;">
-                            <input type="submit" value="View Image">
-                        </form>
+                        <a class="btn" href="/image/{{request.id}}" target="_blank">View Image</a>
                         {% endif %}
 
-                        <form action="/request/{{request.id}}/approve" method="put" style="padding:20px;">
-                            <input type="checkbox" name="approval_value"><label for="approval_value">Approved</label>
+                        <hr>
+                        <form action="/request/{{request.id}}/approve" method="post" style="padding:20px;">
+                            <label for="approval_comment">Approval Comment</label>
+                            <input type="text" name="approval_comment">
+                            <br>
+                            
+                            <input type="checkbox" name="approval_value" value="True" checked>
+                            <label for="approval_value">Approved</label>
+                            <br>
+                            
                             <input type="submit" value="Update Approval">                  
                         </form>
                     </details>
