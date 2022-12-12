@@ -54,10 +54,10 @@ class MRequest(BaseModel):
     block_index: int
     makeup: Makeup
     verified: Optional[bool] = None
-    verification_comment: str = ""
+    verification_comment: str = "Verification Pending"
     verification_output: Optional[Prescription] = None
     approved: Optional[bool] = None
-    approval_comment: str = ""
+    approval_comment: str = "Approval Pending"
 
 class Block(BaseModel):
     index: int

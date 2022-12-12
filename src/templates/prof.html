@@ -40,18 +40,26 @@
         <div class="prof_makeup_list" >
             <h5 class="center"><strong>My Makeups</strong></h5>
             <ul class="prof_makeup" style="list-style: none;margin:50px">
+                
+                {% for makeup in prof_makeups %}
                 <li>
-                    <details class="center" style="background-color: #ddd;margin-bottom:20px;border-radius: 5px;padding:5px">
+                    <details class="center" style="background-color: #ddd;margin-bottom:20px;border-radius:5px;">
                         <summary>
                             <div class="justify-content-around">
-                            <h6 style="margin-right:75px;display:inline-block;">CS F101 Comprehensive Exam</h6>
-                            <h6 style="margin-right:75px;display:inline-block;">10-12-2022</h6>
-                            <h6 style="margin-right:75px;display:inline-block;">Open</h6>
+                                <h6 style="margin-inline:75px;display:inline-block;"><b>{{makeup.title}}</b></h6>
+                                <h6 style="margin-inline:75px;display:inline-block;"><b>{{makeup.eval_date}}</b></h6>
+                                <h6 style="margin-inline:75px;display:inline-block;">
+                                    {% if makeup.isOpen %}
+                                        <b>Open</b>
+                                    {% else %}
+                                        <b>Closed</b>
+                                    {% endif %}
+                                </h6>
                             </div>
                         </summary>
         
-                        <form id="doc_page_form_view" action="contactus.php" method="post" style="margin-top: 2vh;">
-                            <input type="submit" value="View requests" style="background-color: #767879;
+                        <form action="/request/prof/{{makeup.id}}" method="get" style="display:inline-block;padding:20px;">
+                            <input type="submit" value="View Requests" style="background-color: #767879;
                             border: 1px solid #767879;
                             border-radius: 4px;
                             box-shadow: rgba(0, 0, 0, .1) 0 2px 4px 0;
@@ -70,60 +78,11 @@
                             user-select: none;
                             -webkit-user-select: none;
                             touch-action: manipulation;">                       
-                            <input type="submit" value="Close" style="background-color: #767879;
-                            border: 1px solid #767879;
-                            border-radius: 4px;
-                            box-shadow: rgba(0, 0, 0, .1) 0 2px 4px 0;
-                            box-sizing: border-box;
-                            color: #fff;
-                            cursor: pointer;
-                            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-                            font-size: 16px;
-                            font-weight: 400;
-                            outline: none;
-                            outline: 0;
-                            padding: 5px 10px;
-                            text-align: center;
-                            transform: translateY(0);
-                            transition: transform 150ms, box-shadow 150ms;
-                            user-select: none;
-                            -webkit-user-select: none;
-                            touch-action: manipulation;">
                         </form>
-                    </details>
-                </li>
 
-                <li>
-                    <details class="center" style="background-color: #ddd;margin-bottom:20px;">
-                        <summary>
-                            <div class="justify-content-around">
-                            <h6 style="margin-right:75px;display:inline-block;">CS F333 Mid-semester Exam</h6>
-                            <h6 style="margin-right:75px;display:inline-block;">20-09-2022</h6>
-                            <h6 style="margin-right:75px;display:inline-block;">Closed</h6>
-                            </div>
-                        </summary>
-        
-                        <form id="doc_page_form_view" action="contactus.php" method="post" style="margin-top: 2vh;">
-                            <input type="submit" value="View requests" style="background-color: #767879;
-                            border: 1px solid #767879;
-                            border-radius: 4px;
-                            box-shadow: rgba(0, 0, 0, .1) 0 2px 4px 0;
-                            box-sizing: border-box;
-                            color: #fff;
-                            cursor: pointer;
-                            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-                            font-size: 16px;
-                            font-weight: 400;
-                            outline: none;
-                            outline: 0;
-                            padding: 5px 10px;
-                            text-align: center;
-                            transform: translateY(0);
-                            transition: transform 150ms, box-shadow 150ms;
-                            user-select: none;
-                            -webkit-user-select: none;
-                            touch-action: manipulation;">                       
-                            <input type="submit" value="Close" style="background-color: #767879;
+                        {% if makeup.isOpen %}
+                        <form action="/makeup/{{makeup.id}}/close" method="get" style="display:inline-block;padding:20px;">
+                            <input type="submit" value="Close Makeup" style="background-color: #767879;
                             border: 1px solid #767879;
                             border-radius: 4px;
                             box-shadow: rgba(0, 0, 0, .1) 0 2px 4px 0;
@@ -143,21 +102,25 @@
                             -webkit-user-select: none;
                             touch-action: manipulation;">
                         </form>
+                        {% endif %}
+
                     </details>
                 </li>
+                {% endfor %}
             </ul>        
         </div>
         
         <br><hr><br>
         
         <div class="prof_new_makeup" >
-            <form id="prof_page_form" action="contactus.php" method="post">
-                <h5 class="center"><strong>New Makeup</strong></h5>
-                <label>Title</label>
-                <input type="text" name="Makeup_Title" value="Course Name">
+            <h5 class="center"><strong>New Makeup</strong></h5>
             
-                <label>Date of the Makeup exam</label>
-                <input type="date" name="date_makeup" value="DD-MM-YYYY">           
+            <form action="/makeup" method="post">
+                <label for="title">Title</label>
+                <input type="text" name="title" placeholder="Course Name - Evaluative Name">
+            
+                <label for="eval_date">Date of the Makeup exam</label>
+                <input type="date" name="eval_date" placeholder="DD-MM-YYYY">           
                       
                 <input type="submit" value="Submit" style="background-color: #13aa52;
                 border: 1px solid #13aa52;

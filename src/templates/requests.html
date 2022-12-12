@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <title>Makeup System</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', path='css/materialize.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <nav class="container">
+        <div class="nav-wrapper valign-wrapper">
+            <img class="logo" src="{{ url_for('static', path='img/bits-logo.gif') }}" />
+            <img class="navbar-right tagline" src="{{ url_for('static', path='img/bits-tagline.png') }}" />
+        </div>
+    </nav>
+
+    <div>
+        <img class="bits-line" src="{{ url_for('static', path='img/bits-line.gif') }}" />
+    </div>
+
+    <div id="sign_in_button" class="container">
+        <h3 class="center"><strong>Makeup System</strong></h3>
+
+        <div id ="header"> 
+            <h5 class="center">Proffesor : {{user.username}}</h5> 
+            
+            <form action="/signout" method="get">
+                <div class="buttons"> 
+                <button type="submit" name="logout" class="btn-all">Logout</button>            
+                </div>
+            </form>
+            <br>
+        </div>
+
+        <div>
+            <h5 class="center"> Requests for <b>{{makeup.title}}</b></h5>
+
+            <form action="/makeup/{{makeup.id}}/approve" method="put" style="padding:20px;display:inline-block;">
+                <input type="submit" value="Verify All Requests">                       
+            </form>
+
+            <ul class="makeup_reqs" style="list-style: none;margin:50px">
+                {% for request in makeup_requests %}
+                <li>
+                    <details class="center" style="background-color: #ddd;margin-bottom:20px;border-radius:5px;">
+                        <summary>
+                            <div class="justify-content-around">
+                            <h6 style="margin-inline:25px;display:inline-block;"><b>Student: {{request.student.username}}</b></h6>
+                            <h6 style="margin-inline:25px;display:inline-block;"><b>Block Index: {{request.block_index}}</b></h6>
+                            <br>
+
+                            <h6 style="margin-inline:25px;display:inline-block;"><b>
+                                {% if request.verified %} Verified {% endif %} 
+                            </b></h6>
+                            <h6 style="margin-inline:25px;display:inline-block;"><b>Verification Comment: {{request.verification_comment}}</b></h6>
+                            <br>
+
+                            <h6 style="margin-inline:25px;display:inline-block;"><b>
+                                {% if request.approved %} Approved {% endif %} 
+                            </b></h6>
+                            <h6 style="margin-inline:25px;display:inline-block;"><b>Approval Comment: {{request.approval_comment}}</b></h6>
+                            <br>
+                            
+                            </div>
+                        </summary>
+        
+                        <form action="/request/{{request.id}}/approve" method="put" style="padding:20px;display:inline-block;">
+                            <input type="submit" value="Verify Request">                       
+                        </form>
+
+                        {% if request.verification_output %}
+                        <form action="/request/{{request.id}}/approve" method="put" style="padding:20px;display:inline-block;">
+                            <input type="submit" value="View Image">
+                        </form>
+                        {% endif %}
+
+                        <form action="/request/{{request.id}}/approve" method="put" style="padding:20px;">
+                            <input type="checkbox" name="approval_value"><label for="approval_value">Approved</label>
+                            <input type="submit" value="Update Approval">                  
+                        </form>
+                    </details>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>     
+
+        <a class="btn" href="/prof">BACK</a>
+        
+    </div>        
+</body>
+</html>
