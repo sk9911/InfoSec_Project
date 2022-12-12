@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Response
-from fastapi import HTTPException, Depends, Form, File, Cookie
+from fastapi import HTTPException, Depends, Form, Cookie, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -8,6 +8,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 from typing import List
 import jwt
+import hashlib
 
 from Models import User, UserAccount, UserLogin, UserView, Makeup, MakeupData, MRequest, MRequestData, Prescription, BlockData
 from Blockchain import Blockchain
@@ -30,12 +31,12 @@ templates = Jinja2Templates(directory="templates")
 
 ################################################# Auth Middleware ################################################
 def get_current_user(access_token: str = Cookie(default=None)):
-    print("TOKEN",access_token)
+    # print("TOKEN",access_token)
     token = access_token.split(" ")[-1]
     payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
-    print("PAYLOAD",payload)
+    # print("PAYLOAD",payload)
     user = userDB.read(username=payload.get('username'))
-    print("USER", user)
+    # print("USER", user)
     if not user:
         raise HTTPException(status_code=401, detail='MKC')
     return user
@@ -83,7 +84,7 @@ async def show_prof(request: Request, uv:UserView = Depends(get_current_prof)):
     return templates.TemplateResponse("prof.html", {"request": request, "user":uv})
 
 @app.get("/doc", response_class=HTMLResponse)
-async def show_doc(request: Request, uv:UserView = Depends(get_current_prof)):
+async def show_doc(request: Request, uv:UserView = Depends(get_current_doc)):
     return templates.TemplateResponse("doc.html", {"request": request, "user":uv})
 
 ################################################# User Endpoints #################################################
@@ -241,20 +242,42 @@ def get_stud_requests(makeup_id:int, prof: UserView = Depends(get_current_prof))
 
 ############################################# Prescription Endpoints #############################################
 # endpoint to submit visitation document
-@app.post("/prescription", response_model=BlockData)
-async def mine_block(student_username:str = Form(...), rest_duration:int = Form(...), doc: UserView = Depends(get_current_doc)):
-    if not blockchain.is_chain_valid():
-        return HTTPException(status_code=400, detail="Blockchain is Invalid")
-    scan_img = bytes("xyz",'utf-8')
-    message = student_username + str(rest_duration) + '.' + str(scan_img)
+@app.post("/prescription", response_class=HTMLResponse)
+def mine_block(
+    request:Request,
+    img_file:UploadFile = File(...), 
+    student_username:str = Form(...), 
+    rest_duration:int = Form(...), 
+    doc: UserView = Depends(get_current_doc)
+):
+    if not img_file.filename.endswith(".png"):
+        return HTTPException(status_code=400, detail="Invalid File Format")
+    
+    try:
+        img_file.filename = "presc_" + student_username +'_'+ datetime.now().strftime("%m-%d-%Y_%H-%M-%S") + ".png"
+        print("FILE", img_file.filename)
+        contents = img_file.file.read()
+        print("CONTENTS", len(contents))
+        with open(img_file.filename, 'wb') as f:
+            f.write(contents)
+    except Exception:
+        return HTTPException(status_code=500, detail="File Upload Failed")
+    finally:
+        img_file.file.close()
+    
     prescription = Prescription(
         student_username = student_username,
         rest_duration = rest_duration,
-        scan_img = scan_img,
-        signature = crypto.sign_message(message)
+        scan_img = img_file.filename,
+        img_hash = hashlib.sha256(contents).hexdigest(),
     )
+
+    prescription.signature = crypto.sign_message(prescription.get_data_str())
+
     block = blockchain.mine_block(data=prescription)
-    return BlockData(index=block.index, timestamp=block.timestamp)
+    print("BLOCK", block)
+    response = templates.TemplateResponse("prescription.html", {"request": request, "user":doc, "block":block})
+    return response
 
 ####################################### Verification and Approval Endpoints ######################################
 # endpoint to verify request document
@@ -314,8 +337,6 @@ async def edit_request(request_id:int, value: bool = Form(...), comment: str = F
 # endpoint to return the entire blockchain
 @app.get("/test/blockchain/")
 def get_blockchain():
-    if not blockchain.is_chain_valid():
-        return HTTPException(status_code=400, detail="The blockchain is invalid")
     chain = blockchain.chain
     return chain
 

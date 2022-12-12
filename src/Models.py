@@ -38,12 +38,11 @@ class Makeup(BaseModel):
 class Prescription(BaseModel):
     student_username: str
     rest_duration: int
-    scan_img: bytes
-    signature: str
-    def __str__(self):
-        return self.student_username + str(self.rest_duration) + '.' + str(self.scan_img) + '.' + self.signature
+    scan_img: str
+    img_hash: str
+    signature: Optional[str] = None
     def get_data_str(self):
-        return self.student_username + str(self.rest_duration) + '.' + str(self.scan_img)
+        return self.student_username + str(self.rest_duration) + self.scan_img + self.img_hash
 
 class MRequestData(BaseModel):
     block_index: int

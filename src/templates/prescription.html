@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <title>Makeup System</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', path='css/materialize.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+
+</head>
+
+<body>
+
+    <nav class="container">
+        <div class="nav-wrapper valign-wrapper">
+            <img class="logo" src="{{ url_for('static', path='img/bits-logo.gif') }}" />
+            <img class="navbar-right tagline" src="{{ url_for('static', path='img/bits-tagline.png') }}" />
+        </div>
+    </nav>
+
+    <div>
+        <img class="bits-line" src="{{ url_for('static', path='img/bits-line.gif') }}" />
+    </div>
+
+    <div id="sign_in_button" class="container">
+        <h3 class="center"><strong>Makeup System</strong></h3>
+
+        <div id ="header"> 
+            <h5 class="center"><strong>Doctor : {{user.username}}</strong></h5> 
+            
+            <form action="/signout" method="get">
+                <div class="buttons"> 
+                <button type="submit" name="logout" class="btn-all">Logout</button>            
+                </div>
+            </form>          
+        </div>
+
+        <div class="center" style="margin:50px">
+            <h5> &#9989; Prescription Stored On Blockchain</h5>
+            <br>
+            <h5>Block Index : <b>{{block.index}}</b></h5>
+            <h5>Timestamp : <b>{{block.timestamp}}</b></h5>
+        </div>
+
+        <a class="btn" href="/doc">BACK</a>
+        
+    </div>        
+</body>
+</html>

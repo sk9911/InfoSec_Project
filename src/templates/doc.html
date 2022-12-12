@@ -37,7 +37,7 @@
         </div>
 
         <div class="doc_form" style="margin:50px">
-            <form action="/prescription" method="post">
+            <form action="/prescription" method="post" enctype="multipart/form-data">
                 <label for="student_username">Student Username</label>
                 <input type="text" name="student_username" placeholder="2019XXPSYYYY">
                 <br>
@@ -48,8 +48,8 @@
                 <br>
                 <br>
             
-                <label for="scan_img">Upload the Scanned Prescription</label>
-                <input type="file" id="myFile" name="scan_img" >
+                <label for="img_file">Upload the Scanned Prescription (.png)</label><br>
+                <input type="file" name="img_file" >
                 <br>
                 <br>
         
